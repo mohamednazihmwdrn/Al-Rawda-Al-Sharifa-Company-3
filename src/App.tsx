@@ -180,9 +180,82 @@ export default function App() {
   });
 
   // --- Session and Layout States ---
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<string>('admin-item-track');
-  const [activeTabBeforeDetails, setActiveTabBeforeDetails] = useState<string>('admin-item-track');
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const savedUserKey = localStorage.getItem('currentUser_key');
+    if (savedUserKey) {
+      let dbUsers = null;
+      const s = localStorage.getItem('usersDatabase_v3');
+      if (s) {
+        try {
+          dbUsers = JSON.parse(s);
+        } catch (e) {}
+      }
+      if (!dbUsers) {
+        dbUsers = {
+          admin: {
+            pass: btoa('admin123'),
+            role: 'admin',
+            panel: 'admin-item-track',
+            name: 'المدير العام للمنشأة',
+          },
+          rawda: {
+            pass: btoa('123'),
+            role: 'branch',
+            panel: 'rawda-branch',
+            name: 'معرض الروضة',
+            invoiceCounter: 1,
+            returnCounter: 1,
+          },
+          safaa: {
+            pass: btoa('123'),
+            role: 'branch',
+            panel: 'safaa-branch',
+            name: 'معرض الصفا',
+            invoiceCounter: 1,
+            returnCounter: 1,
+          },
+          nadi: {
+            pass: btoa('123'),
+            role: 'wh',
+            panel: 'nadi-wh',
+            name: 'مخزن النادي',
+            mergedInvoiceCounter: 1,
+          },
+          nahas: {
+            pass: btoa('123'),
+            role: 'wh',
+            panel: 'nahas-wh',
+            name: 'مخزن النحاس',
+            mergedInvoiceCounter: 1,
+          },
+        };
+      }
+      if (dbUsers[savedUserKey]) {
+        const userCopy = { ...dbUsers[savedUserKey], key: savedUserKey };
+        if (savedUserKey === 'admin') {
+          userCopy.panel = 'admin-item-track';
+        }
+        return userCopy;
+      }
+    }
+    return null;
+  });
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const savedActiveTab = localStorage.getItem('activeTab_key');
+    if (savedActiveTab) {
+      return savedActiveTab;
+    }
+    const savedUserKey = localStorage.getItem('currentUser_key');
+    if (savedUserKey === 'admin') return 'admin-item-track';
+    if (savedUserKey === 'rawda') return 'rawda-branch';
+    if (savedUserKey === 'safaa') return 'safaa-branch';
+    if (savedUserKey === 'nadi') return 'nadi-wh';
+    if (savedUserKey === 'nahas') return 'nahas-wh';
+    return 'admin-item-track';
+  });
+  const [activeTabBeforeDetails, setActiveTabBeforeDetails] = useState<string>(() => {
+    return localStorage.getItem('activeTab_key') || 'admin-item-track';
+  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(true);
   const [invoiceView, setInvoiceView] = useState<InvoiceView | null>(null);
   const [showPrivacyModal, setShowPrivacyModal] = useState<boolean>(false);
@@ -230,7 +303,22 @@ export default function App() {
       if (snapshot.exists()) {
         const data = snapshot.data();
         isIncomingUpdate.current = true;
-        if (data.users) setUsers(data.users);
+        if (data.users) {
+          setUsers(data.users);
+          const savedUserKey = localStorage.getItem('currentUser_key');
+          if (savedUserKey && data.users[savedUserKey]) {
+            setCurrentUser((prev) => {
+              if (prev) {
+                const userCopy = { ...data.users[savedUserKey], key: savedUserKey };
+                if (savedUserKey === 'admin') {
+                  userCopy.panel = 'admin-item-track';
+                }
+                return userCopy;
+              }
+              return prev;
+            });
+          }
+        }
         if (data.orders) setOrders(data.orders);
         if (data.draftOrders) setDraftOrders(data.draftOrders);
         if (data.returnsDraft) setReturnsDraft(data.returnsDraft);
@@ -305,6 +393,13 @@ export default function App() {
 
     return () => unsubscribe();
   }, []);
+
+  // Keep activeTab synchronized with localStorage
+  useEffect(() => {
+    if (activeTab && activeTab !== 'invoice-details') {
+      localStorage.setItem('activeTab_key', activeTab);
+    }
+  }, [activeTab]);
 
   // Auto-Save whenever states change (Local Backup & Firestore live update)
   useEffect(() => {
@@ -654,6 +749,8 @@ export default function App() {
         userCopy.panel = 'admin-item-track';
       }
       setCurrentUser(userCopy);
+      localStorage.setItem('currentUser_key', u);
+      localStorage.setItem('activeTab_key', userCopy.panel);
       setLoginPassword('');
       showToast(`مرحباً بك في لوحة تحكم ${userCopy.name}`, 'success');
       setActiveTab(userCopy.panel);
@@ -665,6 +762,8 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     setInvoiceView(null);
+    localStorage.removeItem('currentUser_key');
+    localStorage.removeItem('activeTab_key');
     showToast('تم تسجيل الخروج وتأمين الجلسة', 'warning');
   };
 
@@ -1008,10 +1107,11 @@ export default function App() {
         }
         // Exclude this warehouse from seeing untouched/pending orders of type 'جاهز للمخزن'
         if (o.type === 'جاهز للمخزن' && o.status === 'قيد الانتظار' && !o.warehouseClosed) {
-          if (o.excludeWarehouse !== warehouseName) {
+          const exclusions = o.excludeWarehouse ? o.excludeWarehouse.split(',') : [];
+          if (!exclusions.includes(warehouseName)) {
             return {
               ...o,
-              excludeWarehouse: warehouseName,
+              excludeWarehouse: [...exclusions, warehouseName].join(','),
             };
           }
         }
@@ -1379,7 +1479,10 @@ export default function App() {
               <tr>
                   <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">#</th>
                   <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; text-align:right;">الصنف</th>
-                  ${view.type !== 'sent' ? `<th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">${view.type === 'received' ? 'المخزن المورد' : 'المعرض المخرج له'}</th>` : ''}
+                  ${view.type === 'wh_received' ? `
+                    <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">المعرض الطالب</th>
+                    <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">المستودع المورد</th>
+                  ` : (view.type !== 'sent' ? `<th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">${view.type === 'received' ? 'المخزن المورد' : 'المعرض المخرج له'}</th>` : '')}
                   <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">الكمية المطلوبة</th>
                   ${view.type !== 'sent' ? '<th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">المنصرف فعلياً</th>' : ''}
                   ${view.type !== 'sent' ? '<th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">المتبقي / العجز</th>' : ''}
@@ -1393,7 +1496,7 @@ export default function App() {
       let req = item.qty || 0;
       let disp = item.dispatchQty !== undefined ? item.dispatchQty : 0;
       let remaining = req - disp;
-      let itemWh = item.source || item.warehouse || 'غير محدد';
+      let itemWh = item.source || item.warehouse || 'قيد الانتظار بالمخزن';
       let stateText = '';
       if (view.type === 'sent') {
         stateText = (item.status === 'تم الأرشفة' || item.status === 'تم الصرف') ? 'مرسل بالكامل' : 'مرسل';
@@ -1405,10 +1508,13 @@ export default function App() {
           <tr>
               <td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${index + 1}</td>
               <td style="border:1px solid #000; padding:5px 6px; text-align:right; font-size:11px;"><strong>${item.item}</strong></td>
-              ${view.type !== 'sent' ? `<td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${view.type === 'received' ? itemWh : (item.branch || view.destinationBranch)}</td>` : ''}
+              ${view.type === 'wh_received' ? `
+                <td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${item.branch || view.destinationBranch}</td>
+                <td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${itemWh}</td>
+              ` : (view.type !== 'sent' ? `<td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${view.type === 'received' ? itemWh : (item.branch || view.destinationBranch)}</td>` : '')}
               <td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${req}</td>
-              ${view.type !== 'sent' ? `<td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${disp}</td>` : ''}
-              ${view.type !== 'sent' ? `<td style="border:1px solid #000; padding:5px 6px; text-align:center; color:red; font-size:11px;">${remaining}</td>` : ''}
+              <td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${disp}</td>
+              <td style="border:1px solid #000; padding:5px 6px; text-align:center; color:red; font-size:11px;">${remaining}</td>
               <td style="border:1px solid #000; padding:5px 6px; font-size:11px; text-align:center;">${stateText}</td>
           </tr>
       `;
@@ -1581,6 +1687,9 @@ export default function App() {
           setBranchReturnQtyInputs={setBranchReturnQtyInputs}
           receivedInvoices={receivedInvoices}
           onPrintCustomHtml={handlePrintCustomHtml}
+          orders={orders}
+          returnsOrders={returnsOrders}
+          onViewInvoice={handleViewInvoice}
         />
 
         {/* Warehouse processing & lists history screens */}

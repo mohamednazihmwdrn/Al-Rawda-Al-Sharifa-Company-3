@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UsersDatabase, DraftOrder, ReturnDraft, ReceivedInvoice } from '../types';
+import { UsersDatabase, DraftOrder, ReturnDraft, ReceivedInvoice, Order, ReturnOrder } from '../types';
 
 interface BranchPanelsProps {
   activeTab: string;
@@ -22,6 +22,9 @@ interface BranchPanelsProps {
   setBranchReturnQtyInputs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   receivedInvoices?: ReceivedInvoice[];
   onPrintCustomHtml?: (title: string, subtitle: string, html: string, isPdf?: boolean) => void;
+  orders?: Order[];
+  returnsOrders?: ReturnOrder[];
+  onViewInvoice?: (invoiceCode: string, type: 'sent' | 'wh_received' | 'merged' | 'closed' | 'received') => void;
 }
 
 export const BranchPanels: React.FC<BranchPanelsProps> = ({
@@ -45,7 +48,12 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
   setBranchReturnQtyInputs,
   receivedInvoices = [],
   onPrintCustomHtml,
+  orders = [],
+  returnsOrders = [],
+  onViewInvoice,
 }) => {
+  const [expandedReturnCode, setExpandedReturnCode] = useState<string | null>(null);
+
   // Find which user/branch is related to the activeTab
   const isBranchTab = activeTab.endsWith('-branch');
   const isReturnsTab = activeTab.endsWith('-returns');
@@ -163,6 +171,95 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
         <button className="btn btn-primary" onClick={() => onSubmitDraft(branchName)}>
           🚀 إرسال الفاتورة للمخازن
         </button>
+
+        <hr style={{ margin: '35px 0 25px 0', borderColor: '#e2e8f0', borderWidth: '1px', borderStyle: 'solid' }} />
+
+        <div className="section-header" style={{ marginBottom: '15px' }}>
+          <h3>📤 قسم المرسلات (طلبات النواقص المرسلة السابقة)</h3>
+          <p style={{ color: '#555', fontSize: '13.5px', marginTop: '4px' }}>
+            تُحفظ كافة الطلبات المرسلة من حسابك هنا وتُحدث حالات الصرف والاستلام بشكل حي دون تصفير أو فقدان للبيانات.
+          </p>
+        </div>
+
+        <table id={`table-${userKey}-sent-requests`}>
+          <thead>
+            <tr>
+              <th style={{ width: '60px', textAlign: 'center' }}>#</th>
+              <th>كود الفاتورة</th>
+              <th>تاريخ الإرسال</th>
+              <th style={{ textAlign: 'center' }}>عدد الأصناف المطلوبة</th>
+              <th style={{ textAlign: 'center' }}>حالة الصرف والطلب</th>
+              <th style={{ textAlign: 'center' }}>إجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(() => {
+              const branchOrders = (orders || []).filter((o) => o.branch === branchName && o.type === 'جاهز للمخزن');
+              const uniqueInvoiceCodes = Array.from(new Set(branchOrders.map((o) => o.invoiceCode))).reverse(); // Show newest first
+
+              if (uniqueInvoiceCodes.length === 0) {
+                return (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', color: '#999', padding: '25px' }}>
+                      📭 لم يتم إرسال أي فواتير أو طلبات نواقص من هذا المعرض بعد.
+                    </td>
+                  </tr>
+                );
+              }
+
+              return uniqueInvoiceCodes.map((invCode, idx) => {
+                const invoiceItems = branchOrders.filter((o) => o.invoiceCode === invCode);
+                
+                let badgeClass = 'badge-pending';
+                let statusText = 'قيد الانتظار بالمخازن';
+                
+                const allArchived = invoiceItems.every((i) => i.status === 'تم الأرشفة' || i.warehouseClosed);
+                const allPending = invoiceItems.every((i) => i.status === 'قيد الانتظار');
+                const anyDispatched = invoiceItems.some((i) => i.status === 'تم الصرف');
+                const anyPending = invoiceItems.some((i) => i.status === 'قيد الانتظار');
+
+                if (allArchived) {
+                  badgeClass = 'badge-closed';
+                  statusText = 'تم الاستلام وإغلاق الأرشيف';
+                } else if (allPending) {
+                  badgeClass = 'badge-pending';
+                  statusText = 'بانتظار الصرف بالمخازن';
+                } else if (anyDispatched && anyPending) {
+                  badgeClass = 'badge-info';
+                  statusText = 'تم الصرف جزئياً من المخازن';
+                } else if (invoiceItems.every((i) => i.status === 'تم الصرف')) {
+                  badgeClass = 'badge-success';
+                  statusText = 'جاهز للاستلام الفعلي';
+                }
+
+                return (
+                  <tr key={invCode}>
+                    <td style={{ textAlign: 'center' }}><strong>{idx + 1}</strong></td>
+                    <td><strong>{invCode}</strong></td>
+                    <td>{invoiceItems[0]?.date || 'غير محدد'}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span style={{ fontWeight: 'bold', color: 'var(--primary-blue)', fontSize: '14px' }}>
+                        {invoiceItems.length} صنف
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`badge ${badgeClass}`}>{statusText}</span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button
+                        className="btn btn-sm btn-view"
+                        onClick={() => onViewInvoice?.(invCode, 'sent')}
+                        style={{ padding: '4px 10px', fontSize: '12px' }}
+                      >
+                        👁️ عرض تفاصيل الفاتورة
+                      </button>
+                    </td>
+                  </tr>
+                );
+              });
+            })()}
+          </tbody>
+        </table>
       </div>
     );
   }
@@ -287,6 +384,120 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
         <button className="btn btn-warning" onClick={() => onSubmitReturns(branchName)}>
           🚀 إرسال المرتجعات لجميع المخازن
         </button>
+
+        <hr style={{ margin: '35px 0 25px 0', borderColor: '#e2e8f0', borderWidth: '1px', borderStyle: 'solid' }} />
+
+        <div className="section-header" style={{ marginBottom: '15px' }}>
+          <h3>⏪ قسم المرتجعات المرسلة (سجل المرتجعات التاريخي)</h3>
+          <p style={{ color: '#555', fontSize: '13.5px', marginTop: '4px' }}>
+            تُحفظ كافة المرتجعات المرسلة من حسابك هنا وتُحدث حالات استلامها فورياً من قِبل المخازن دون تصفير.
+          </p>
+        </div>
+
+        <table id={`table-${userKey}-sent-returns`}>
+          <thead>
+            <tr>
+              <th style={{ width: '60px', textAlign: 'center' }}>#</th>
+              <th>كود المرتجع</th>
+              <th>تاريخ الإرسال</th>
+              <th style={{ textAlign: 'center' }}>عدد الأصناف المرتجعة</th>
+              <th style={{ textAlign: 'center' }}>الحالة والجهة المستلمة</th>
+              <th style={{ textAlign: 'center' }}>إجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(() => {
+              const branchReturns = (returnsOrders || []).filter((r) => r.branch === branchName);
+              const uniqueReturnCodes = Array.from(new Set(branchReturns.map((r) => r.returnCode))).reverse(); // Show newest first
+
+              if (uniqueReturnCodes.length === 0) {
+                return (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', color: '#999', padding: '25px' }}>
+                      📭 لم يتم إرسال أي مرتجعات من هذا المعرض بعد.
+                    </td>
+                  </tr>
+                );
+              }
+
+              return uniqueReturnCodes.map((retCode, idx) => {
+                const returnItems = branchReturns.filter((r) => r.returnCode === retCode);
+                const isExpanded = expandedReturnCode === retCode;
+
+                let badgeClass = 'badge-pending';
+                let statusText = 'بانتظار الاستلام بالمخازن';
+                
+                const allReceived = returnItems.every((r) => r.status === 'تم الاستلام بنجاح');
+                if (allReceived) {
+                  badgeClass = 'badge-success';
+                  statusText = `تم الاستلام في: ${returnItems[0]?.receivedBy || 'المخازن'}`;
+                }
+
+                return (
+                  <React.Fragment key={retCode}>
+                    <tr>
+                      <td style={{ textAlign: 'center' }}><strong>{idx + 1}</strong></td>
+                      <td><strong>{retCode}</strong></td>
+                      <td>{returnItems[0]?.date || 'غير محدد'}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span style={{ fontWeight: 'bold', color: 'var(--warning)', fontSize: '14px' }}>
+                          {returnItems.length} صنف
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span className={`badge ${badgeClass}`}>{statusText}</span>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <button
+                          className="btn btn-sm btn-view"
+                          onClick={() => setExpandedReturnCode(isExpanded ? null : retCode)}
+                          style={{ padding: '4px 10px', fontSize: '12px', background: isExpanded ? '#475569' : 'var(--warning)', color: 'white' }}
+                        >
+                          {isExpanded ? '▲ إغلاق التفاصيل' : '▼ عرض تفاصيل الأصناف'}
+                        </button>
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={6} style={{ background: '#f8fafc', padding: '15px' }}>
+                          <div style={{ padding: '5px 15px', borderRight: '3px solid var(--warning)' }}>
+                            <h4 style={{ margin: '0 0 10px 0', fontSize: '14px' }}>📋 تفاصيل أصناف المرتجع: {retCode}</h4>
+                            <table className="table" style={{ margin: 0, width: '100%', background: 'white' }}>
+                              <thead>
+                                <tr style={{ background: '#f1f5f9' }}>
+                                  <th>الصنف المرتجع</th>
+                                  <th style={{ textAlign: 'center' }}>الكمية المرتجعة</th>
+                                  <th style={{ textAlign: 'center' }}>الحالة</th>
+                                  <th style={{ textAlign: 'center' }}>تاريخ ترحيل الاستلام</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {returnItems.map((item) => (
+                                  <tr key={item.id}>
+                                    <td><strong>{item.item}</strong></td>
+                                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{item.qty}</td>
+                                    <td style={{ textAlign: 'center' }}>
+                                      <span className={`badge ${item.status === 'تم الاستلام بنجاح' ? 'badge-success' : 'badge-pending'}`}>
+                                        {item.status}
+                                      </span>
+                                    </td>
+                                    <td style={{ textAlign: 'center', fontSize: '12px', color: '#666' }}>
+                                      {item.receivedDate || '-'}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              });
+            })()}
+          </tbody>
+        </table>
       </div>
     );
   }

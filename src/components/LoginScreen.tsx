@@ -39,11 +39,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           value={loginUsername}
           onChange={(e) => setLoginUsername(e.target.value)}
         >
-          {Object.keys(users).map((key) => (
-            <option key={key} value={key}>
-              {users[key].name}
-            </option>
-          ))}
+          {(() => {
+            const orderMap: Record<string, number> = {
+              admin: 1,
+              rawda: 2,
+              safaa: 3,
+              nahas: 4,
+              nadi: 5,
+            };
+            const sortedKeys = Object.keys(users).sort((a, b) => {
+              const scoreA = orderMap[a] || 999;
+              const scoreB = orderMap[b] || 999;
+              return scoreA - scoreB;
+            });
+            return sortedKeys.map((key) => (
+              <option key={key} value={key}>
+                {users[key].name}
+              </option>
+            ));
+          })()}
         </select>
       </div>
       <div className="form-group">

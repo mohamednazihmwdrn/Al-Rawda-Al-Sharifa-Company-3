@@ -84,7 +84,7 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
       (o) =>
         o.type === 'جاهز للمخزن' &&
         !o.warehouseClosed &&
-        o.excludeWarehouse !== warehouseName &&
+        !(o.excludeWarehouse && o.excludeWarehouse.split(',').includes(warehouseName)) &&
         (o.status === 'قيد الانتظار' || (o.status === 'تم الصرف' && o.source === warehouseName))
     );
 
@@ -1348,10 +1348,17 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
               <tr>
                 <th>#</th>
                 <th>اسم ومواصفات الصنف</th>
-                {view.type !== 'sent' && (
-                  <th>
-                    {view.type === 'received' ? 'المخزن المورد' : 'المعرض المخرج له'}
-                  </th>
+                {view.type === 'wh_received' ? (
+                  <>
+                    <th>المعرض الطالب</th>
+                    <th>المستودع المورد</th>
+                  </>
+                ) : (
+                  view.type !== 'sent' && (
+                    <th>
+                      {view.type === 'received' ? 'المخزن المورد' : 'المعرض المخرج له'}
+                    </th>
+                  )
                 )}
                 <th>الكمية المطلوبة (المرسلة)</th>
                 {view.type !== 'sent' && <th>المنصرف فعلياً (المستلم)</th>}
@@ -1391,12 +1398,27 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
                     <td>
                       <strong>{item.item}</strong>
                     </td>
-                    {view.type !== 'sent' && (
-                      <td>
-                        <span className="badge badge-info">
-                          {view.type === 'received' ? itemWh : (item.branch || view.destinationBranch)}
-                        </span>
-                      </td>
+                    {view.type === 'wh_received' ? (
+                      <>
+                        <td>
+                          <span className="badge badge-info">
+                            {item.branch || view.destinationBranch}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="badge badge-closed">
+                            {itemWh}
+                          </span>
+                        </td>
+                      </>
+                    ) : (
+                      view.type !== 'sent' && (
+                        <td>
+                          <span className="badge badge-info">
+                            {view.type === 'received' ? itemWh : (item.branch || view.destinationBranch)}
+                          </span>
+                        </td>
+                      )
                     )}
                     <td>
                       <span
