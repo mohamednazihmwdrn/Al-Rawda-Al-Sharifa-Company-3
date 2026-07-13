@@ -1,0 +1,6 @@
+{
+  "name": "نظام إدارة النواقص والمرتجعات",
+  "description": "النظام الموحد والمتكامل لإدارة النواقص والطلبيات المرتجعة لشركة الروضة الشريفة مع لوحة تحكم الإدارة العليا وكشوف المخازن والمعارض",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

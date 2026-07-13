@@ -1,0 +1,61 @@
+{
+  "entities": {
+    "SyncState": {
+      "title": "SyncState",
+      "description": "The unified state document containing all application data synchronized in real-time.",
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "object",
+          "description": "A map of username to user details (role, password, name, etc.)."
+        },
+        "orders": {
+          "type": "array",
+          "description": "Active orders or warehouse deficit requests."
+        },
+        "draftOrders": {
+          "type": "array",
+          "description": "Draft orders before submit."
+        },
+        "returnsDraft": {
+          "type": "array",
+          "description": "Returns draft before submit."
+        },
+        "returnsOrders": {
+          "type": "array",
+          "description": "Active return orders/requests."
+        },
+        "mergedInvoices": {
+          "type": "array",
+          "description": "Merged invoices created by warehouse."
+        },
+        "receivedInvoices": {
+          "type": "array",
+          "description": "Invoices received by the branches."
+        },
+        "closedInvoices": {
+          "type": "array",
+          "description": "Closed/archived invoices."
+        },
+        "orderIdCounter": {
+          "type": "integer",
+          "description": "Counter for generating unique order IDs."
+        },
+        "returnIdCounter": {
+          "type": "integer",
+          "description": "Counter for generating unique return IDs."
+        },
+        "savedItemsCatalog": {
+          "type": "array",
+          "description": "An array of saved items names for autocompletion."
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/sync/{syncId}": {
+      "schema": "SyncState",
+      "description": "Document holding the real-time shared state."
+    }
+  }
+}
