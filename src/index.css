@@ -348,6 +348,25 @@ body {
     background: rgba(192, 57, 43, 0.15);
 }
 
+.top-header .btn-refresh-header {
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(52, 152, 219, 0.2);
+    color: var(--primary-blue);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.top-header .btn-refresh-header:hover {
+    background: rgba(52, 152, 219, 0.15);
+}
+
 .panel {
     background: var(--bg-white);
     padding: 25px;

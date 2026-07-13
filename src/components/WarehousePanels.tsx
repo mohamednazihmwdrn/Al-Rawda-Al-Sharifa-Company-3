@@ -20,6 +20,7 @@ interface WarehousePanelsProps {
   receivedInvoices: ReceivedInvoice[];
   closedInvoices: MergedInvoice[];
   onDispatchItem: (orderId: number, warehouseName: string) => void;
+  onReopenDispatchItem: (orderId: number) => void;
   onCloseWarehouseInvoice: (warehouseName: string) => void;
   onReceiveReturnItem: (returnId: number, warehouseName: string) => void;
   onViewInvoice: (
@@ -52,6 +53,7 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
   receivedInvoices,
   closedInvoices,
   onDispatchItem,
+  onReopenDispatchItem,
   onCloseWarehouseInvoice,
   onReceiveReturnItem,
   onViewInvoice,
@@ -70,6 +72,8 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
   searchMergedQuery,
   setSearchMergedQuery,
 }) => {
+  const [expandedOrderId, setExpandedOrderId] = React.useState<number | null>(null);
+
   // 1. Warehouse LIVE panels (*-wh)
   if (activeTab.endsWith('-wh') && activeTab !== 'merged-returns-wh') {
     const userKey = activeTab.replace('-wh', '');
@@ -222,58 +226,138 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
               filteredOrders.map((o) => {
                 const inputId = o.id.toString();
                 const currentQtyVal = whQtyInputs[inputId] !== undefined ? whQtyInputs[inputId] : o.qty.toString();
+                const numVal = parseInt(currentQtyVal) || 0;
+                const isExpanded = expandedOrderId === o.id;
 
                 return (
-                  <tr key={o.id}>
-                    <td>
-                      <strong>{o.branch}</strong>
-                    </td>
-                    <td>
-                      <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-                        {o.invoiceCode}
-                      </span>
-                    </td>
-                    <td>{o.item}</td>
-                    <td>
-                      <strong>{o.qty}</strong>
-                    </td>
-                    <td>
-                      {o.status === 'قيد الانتظار' ? (
-                        <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                          <input
-                            type="number"
-                            className="wh-qty-input"
-                            min="0"
-                            max={o.qty}
-                            value={currentQtyVal}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setWhQtyInputs((prev) => ({ ...prev, [inputId]: val }));
-                            }}
-                          />
-                          <button
-                            className="btn btn-success btn-sm"
-                            onClick={() => onDispatchItem(o.id, warehouseName)}
-                          >
-                            ✅ إقرار توريد
-                          </button>
-                        </div>
-                      ) : (
-                        <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>
-                          تم صرف: {o.dispatchQty} وحدات
+                  <React.Fragment key={o.id}>
+                    <tr 
+                      style={{ cursor: 'pointer', background: isExpanded ? '#f8fafc' : undefined }}
+                      onClick={() => setExpandedOrderId(isExpanded ? null : o.id)}
+                    >
+                      <td>
+                        <strong>{o.branch}</strong>
+                      </td>
+                      <td>
+                        <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                          {o.invoiceCode}
                         </span>
-                      )}
-                    </td>
-                    <td>
-                      <span
-                        className={`badge ${
-                          o.status === 'قيد الانتظار' ? 'badge-pending' : 'badge-success'
-                        }`}
-                      >
-                        {o.status === 'قيد الانتظار' ? 'بانتظار الصرف' : 'جاهزة للغلوق'}
-                      </span>
-                    </td>
-                  </tr>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>🔍</span>
+                          <strong>{o.item}</strong>
+                        </div>
+                      </td>
+                      <td>
+                        <strong style={{ fontSize: '15px' }}>{o.qty}</strong>
+                      </td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        {o.status === 'قيد الانتظار' ? (
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <input
+                              type="number"
+                              className="wh-qty-input"
+                              min="0"
+                              value={currentQtyVal}
+                              style={{ width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setWhQtyInputs((prev) => ({ ...prev, [inputId]: val }));
+                              }}
+                            />
+                            <button
+                              className="btn btn-success btn-sm"
+                              style={{ padding: '6px 12px', fontWeight: '600' }}
+                              onClick={() => onDispatchItem(o.id, warehouseName)}
+                            >
+                              ✅ إقرار توريد
+                            </button>
+                            <button
+                              className="btn btn-sm"
+                              style={{ background: '#ef4444', color: 'white', padding: '6px 12px', fontWeight: '600' }}
+                              onClick={() => {
+                                setWhQtyInputs((prev) => ({ ...prev, [inputId]: '0' }));
+                                setTimeout(() => {
+                                  onDispatchItem(o.id, warehouseName);
+                                }, 100);
+                              }}
+                              title="تعليم الصنف كغير متوفر في المخزن"
+                            >
+                              ❌ غير متوفر
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <span style={{ color: o.dispatchQty === 0 ? '#ef4444' : '#10b981', fontWeight: 'bold' }}>
+                              {o.dispatchQty === 0 ? '⚠️ غير متوفر (0 صرف)' : `تم صرف: ${o.dispatchQty} وحدات`}
+                            </span>
+                            <button
+                              className="btn btn-sm"
+                              style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '4px 10px', fontSize: '12px' }}
+                              onClick={() => onReopenDispatchItem(o.id)}
+                            >
+                              ✏️ تعديل الصرف
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <span
+                          className={`badge ${
+                            o.status === 'قيد الانتظار' ? 'badge-pending' : 'badge-success'
+                          }`}
+                        >
+                          {o.status === 'قيد الانتظار' ? 'بانتظار الصرف' : 'جاهزة للغلوق'}
+                        </span>
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr onClick={(e) => e.stopPropagation()}>
+                        <td colSpan={6} style={{ backgroundColor: '#f8fafc', padding: '15px' }}>
+                          <div style={{ padding: '12px', borderRight: '4px solid var(--primary-blue)', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                            <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#1e293b', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>📋 تفاصيل وموقف الصنف: {o.item}</span>
+                              <span style={{ fontSize: '12px', color: '#64748b' }}>كود الطلب: {o.id}</span>
+                            </h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px', fontSize: '13px' }}>
+                              <div>🏢 المعرض المستفيد: <strong>{o.branch}</strong></div>
+                              <div>📦 كود الفاتورة الموحدة: <strong className="font-mono">{o.invoiceCode}</strong></div>
+                              <div>📅 تاريخ الطلب: <strong>{o.date}</strong></div>
+                              <div>📊 الكمية المطلوبة بالأساس: <strong style={{ color: 'var(--primary-blue)', fontSize: '14px' }}>{o.qty} وحدات</strong></div>
+                            </div>
+
+                            <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#f0fdf4', borderRadius: '4px', fontSize: '13px', border: '1px solid #bbf7d0' }}>
+                              💡 <strong>موقف الصرف وحالة التواجد:</strong>
+                              <div style={{ marginTop: '5px', color: '#15803d' }}>
+                                {o.status === 'قيد الانتظار' ? (
+                                  numVal > o.qty ? (
+                                    <span style={{ color: '#ea580c', fontWeight: 'bold' }}>
+                                      ⚠️ تنبيه: الكمية المدخلة ({numVal}) تتجاوز الحد المطلوب ({o.qty}). سيتم تسجيل الكمية الخارجة بالكامل ({numVal}) بناء على طلبك وتجاوز الحد المسموح.
+                                    </span>
+                                  ) : numVal === 0 ? (
+                                    <span style={{ color: '#ef4444', fontWeight: 'bold' }}>
+                                      ⚠️ تنبيه: لقد اخترت صرف (0) وحدات. سيتم إخطار المعرض تلقائياً بأن هذا الصنف غير متوفر بالمخزن لتسوية العجز.
+                                    </span>
+                                  ) : (
+                                    <span>الكمية المتاحة كافية وجاهزة للصرف من مستودع <strong>{warehouseName}</strong>.</span>
+                                  )
+                                ) : (
+                                  o.dispatchQty === 0 ? (
+                                    <span style={{ color: '#ef4444', fontWeight: 'bold' }}>
+                                      تم تأكيد عدم توفر الصنف بالكامل في {warehouseName}.
+                                    </span>
+                                  ) : (
+                                    <span>تم إقرار وتثبيت صرف عدد <strong>{o.dispatchQty}</strong> وحدات بنجاح.</span>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })
             )}
@@ -1314,145 +1398,180 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
   // 10. Invoice Details Screen (invoice-details)
   if (activeTab === 'invoice-details' && invoiceView) {
     const view = invoiceView;
-    const totalQty = view.items.reduce((sum, item) => sum + (item.qty || 0), 0);
+    
+    // Group the items in the invoice to show multi-warehouse dispatched quantities
+    const groupedItems = (() => {
+      const itemGroups: Record<string, {
+        item: string;
+        requestedQty: number;
+        nadiQty: number;
+        nahasQty: number;
+        deficitQty: number;
+        statusText: string;
+        badgeClass: string;
+      }> = {};
+
+      const invoiceCode = view.invoiceCode;
+      
+      // Get all orders in the master orders array that match this invoiceCode
+      const matchedOrders = orders.filter(o => o.invoiceCode === invoiceCode);
+
+      if (matchedOrders.length > 0) {
+        matchedOrders.forEach(o => {
+          const name = o.item;
+          if (!itemGroups[name]) {
+            itemGroups[name] = {
+              item: name,
+              requestedQty: 0,
+              nadiQty: 0,
+              nahasQty: 0,
+              deficitQty: 0,
+              statusText: 'قيد الانتظار',
+              badgeClass: 'badge-pending'
+            };
+          }
+          // The base requested quantity is o.qty
+          itemGroups[name].requestedQty += o.qty;
+          
+          if (o.status === 'تم الصرف' || o.status === 'تم الأرشفة') {
+            const dispatched = o.dispatchQty || 0;
+            if (o.source === 'مخزن النادي') {
+              itemGroups[name].nadiQty += dispatched;
+            } else if (o.source === 'مخزن النحاس') {
+              itemGroups[name].nahasQty += dispatched;
+            } else {
+              itemGroups[name].nadiQty += dispatched;
+            }
+          }
+        });
+      } else {
+        // Fallback to view.items passed in if no live orders are in state
+        view.items.forEach(it => {
+          const name = it.item;
+          if (!itemGroups[name]) {
+            itemGroups[name] = {
+              item: name,
+              requestedQty: it.qty || 0,
+              nadiQty: 0,
+              nahasQty: 0,
+              deficitQty: 0,
+              statusText: 'قيد الانتظار',
+              badgeClass: 'badge-pending'
+            };
+          }
+          const disp = it.dispatchQty || 0;
+          const src = it.source || it.warehouse || view.originWh || '';
+          if (src.includes('النادي')) {
+            itemGroups[name].nadiQty += disp;
+          } else if (src.includes('النحاس')) {
+            itemGroups[name].nahasQty += disp;
+          } else {
+            itemGroups[name].nadiQty += disp;
+          }
+        });
+      }
+
+      // Compute deficit and status text for each group
+      return Object.values(itemGroups).map(g => {
+        const totalDisp = g.nadiQty + g.nahasQty;
+        g.deficitQty = Math.max(0, g.requestedQty - totalDisp);
+        if (totalDisp >= g.requestedQty) {
+          g.statusText = 'واصل كامل';
+          g.badgeClass = 'badge-success';
+        } else if (totalDisp > 0) {
+          g.statusText = 'واصل جزئي';
+          g.badgeClass = 'badge-pending';
+        } else {
+          g.statusText = 'لم يصل / قيد الانتظار';
+          g.badgeClass = 'badge-danger';
+        }
+        return g;
+      });
+    })();
+
+    const totalQty = groupedItems.reduce((sum, item) => sum + item.requestedQty, 0);
+    const totalNadi = groupedItems.reduce((sum, item) => sum + item.nadiQty, 0);
+    const totalNahas = groupedItems.reduce((sum, item) => sum + item.nahasQty, 0);
+    const totalDeficit = groupedItems.reduce((sum, item) => sum + item.deficitQty, 0);
 
     return (
       <div id="invoice-details" className="panel active" dir="rtl">
-        <h2>📄 تفاصيل الفاتورة ومطابقة البيانات المدمجة</h2>
+        <h2>📄 تفاصيل ومطابقة عجز الفاتورة الكلية</h2>
         <div className="invoice-details">
-          <div className="invoice-header">
+          <div className="invoice-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px' }}>
             <div>
-              <strong>{view.title}</strong>
+              <strong style={{ fontSize: '18px', color: 'var(--primary-blue)' }}>رقم المعاملة الموحد: {view.invoiceCode || view.invoiceNumber}</strong>
             </div>
-            <div>📅 تاريخ المعاملة: {view.dateStr}</div>
+            <div>📅 تاريخ التوثيق اليومي: {view.dateStr}</div>
           </div>
           <div
             style={{
-              marginBottom: '15px',
-              padding: '10px',
-              background: '#eef2f7',
-              borderRadius: '6px',
-              fontSize: '13px',
+              marginBottom: '20px',
+              padding: '15px',
+              background: '#f1f5f9',
+              borderRadius: '8px',
+              fontSize: '14px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              border: '1px solid #e2e8f0'
             }}
           >
-            <span style={{ marginLeft: '20px' }}>
-              🏢 الجهة الطالبة/المستلمة: <strong>{view.destinationBranch}</strong>
+            <span>
+              🏢 الجهة الطالبة (المعرض المستلم): <strong style={{ fontSize: '16px', color: '#1e293b' }}>{view.destinationBranch}</strong>
             </span>
             <span>
-              📦 مصدر التوريد الصادر:{' '}
-              <strong style={{ color: 'var(--primary-blue)' }}>{view.originWh}</strong>
+              📦 حالة التنسيق: <strong style={{ color: 'var(--success)' }}>تغطية مدمجة (النادي + النحاس)</strong>
             </span>
           </div>
           <table>
             <thead>
-              <tr>
-                <th>#</th>
-                <th>اسم ومواصفات الصنف</th>
-                {view.type === 'wh_received' ? (
-                  <>
-                    <th>المعرض الطالب</th>
-                    <th>المستودع المورد</th>
-                  </>
-                ) : (
-                  view.type !== 'sent' && (
-                    <th>
-                      {view.type === 'received' ? 'المخزن المورد' : 'المعرض المخرج له'}
-                    </th>
-                  )
-                )}
-                <th>الكمية المطلوبة (المرسلة)</th>
-                {view.type !== 'sent' && <th>المنصرف فعلياً (المستلم)</th>}
-                {view.type !== 'sent' && <th>العجز / النواقص الكلية</th>}
-                <th>حالة التوريد وموقف الصنف</th>
+              <tr style={{ backgroundColor: '#f1f5f9' }}>
+                <th style={{ width: '50px' }}>#</th>
+                <th style={{ textAlign: 'right' }}>اسم ومواصفات الصنف المعني بالطلب</th>
+                <th style={{ textAlign: 'center', width: '130px' }}>الكمية المطلوبة الكلية</th>
+                <th style={{ textAlign: 'center', width: '130px', color: '#4f46e5' }}>صرف مخزن النادي</th>
+                <th style={{ textAlign: 'center', width: '130px', color: '#0891b2' }}>صرف مخزن النحاس</th>
+                <th style={{ textAlign: 'center', width: '130px', color: '#dc2626' }}>العجز / المتبقي الكلي</th>
+                <th style={{ textAlign: 'center', width: '160px' }}>حالة التوريد وموقف الصنف</th>
               </tr>
             </thead>
             <tbody>
-              {view.items.map((item, index) => {
-                const req = item.qty || 0;
-                const disp = item.dispatchQty !== undefined ? item.dispatchQty : 0;
-                const remaining = req - disp;
-                const itemWh = item.source || item.warehouse || 'قيد الانتظار بالمخزن';
-
-                let statusBadge = 'badge-pending';
-                let statusText = 'واصل جزئي';
-
-                if (view.type === 'sent') {
-                  statusBadge = 'badge-info';
-                  statusText =
-                    item.status === 'تم الأرشفة' || item.status === 'تم الصرف'
-                      ? 'مرسل بالكامل'
-                      : 'مرسل';
-                } else {
-                  if (disp >= req) {
-                    statusBadge = 'badge-success';
-                    statusText = 'واصل كامل';
-                  } else {
-                    statusBadge = 'badge-danger';
-                    statusText = 'واصل جزئي';
-                  }
-                }
-
+              {groupedItems.map((item, index) => {
                 return (
                   <tr key={index}>
                     <td>{index + 1}</td>
                     <td>
-                      <strong>{item.item}</strong>
+                      <strong style={{ fontSize: '14px', color: '#1e293b' }}>{item.item}</strong>
                     </td>
-                    {view.type === 'wh_received' ? (
-                      <>
-                        <td>
-                          <span className="badge badge-info">
-                            {item.branch || view.destinationBranch}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="badge badge-closed">
-                            {itemWh}
-                          </span>
-                        </td>
-                      </>
-                    ) : (
-                      view.type !== 'sent' && (
-                        <td>
-                          <span className="badge badge-info">
-                            {view.type === 'received' ? itemWh : (item.branch || view.destinationBranch)}
-                          </span>
-                        </td>
-                      )
-                    )}
-                    <td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#475569' }}>
+                        {item.requestedQty}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center', backgroundColor: '#faf5ff' }}>
+                      <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#4f46e5' }}>
+                        {item.nadiQty}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center', backgroundColor: '#ecfeff' }}>
+                      <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#0891b2' }}>
+                        {item.nahasQty}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center', backgroundColor: item.deficitQty > 0 ? '#fef2f2' : undefined }}>
                       <span
                         style={{
                           fontSize: '15px',
                           fontWeight: 'bold',
-                          color: 'var(--primary-dark)',
+                          color: item.deficitQty > 0 ? '#ef4444' : '#64748b',
                         }}
                       >
-                        {req}
+                        {item.deficitQty}
                       </span>
                     </td>
-                    {view.type !== 'sent' && (
-                      <td>
-                        <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--success)' }}>
-                          {disp}
-                        </span>
-                      </td>
-                    )}
-                    {view.type !== 'sent' && (
-                      <td>
-                        <span
-                          style={{
-                            fontSize: '15px',
-                            fontWeight: 'bold',
-                            color: remaining > 0 ? 'var(--danger)' : 'var(--text-light)',
-                          }}
-                        >
-                          {remaining}
-                        </span>
-                      </td>
-                    )}
-                    <td>
-                      <span className={`badge ${statusBadge}`}>{statusText}</span>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`badge ${item.badgeClass}`}>{item.statusText}</span>
                     </td>
                   </tr>
                 );
@@ -1461,17 +1580,30 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
           </table>
           <div
             style={{
-              marginTop: '15px',
-              padding: '12px',
-              background: 'var(--bg-gray)',
+              marginTop: '20px',
+              padding: '15px',
+              background: '#e2e8f0',
               borderRadius: '8px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontWeight: 600,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '15px',
+              fontWeight: 700,
+              fontSize: '14px',
+              color: '#1e293b'
             }}
           >
-            <div>إجمالي عدد الأصناف المدرجة: {view.items.length}</div>
-            <div>مجموع وحدات الطلب الكلية: {totalQty}</div>
+            <div style={{ padding: '8px', background: 'white', borderRadius: '6px', textAlign: 'center', border: '1px solid #cbd5e1' }}>
+              📊 إجمالي المطلوب: <span style={{ color: '#475569', fontSize: '16px' }}>{totalQty}</span>
+            </div>
+            <div style={{ padding: '8px', background: '#faf5ff', borderRadius: '6px', textAlign: 'center', border: '1px solid #e9d5ff' }}>
+              💜 إجمالي صرف النادي: <span style={{ color: '#4f46e5', fontSize: '16px' }}>{totalNadi}</span>
+            </div>
+            <div style={{ padding: '8px', background: '#ecfeff', borderRadius: '6px', textAlign: 'center', border: '1px solid #c5f2f7' }}>
+              🩵 إجمالي صرف النحاس: <span style={{ color: '#0891b2', fontSize: '16px' }}>{totalNahas}</span>
+            </div>
+            <div style={{ padding: '8px', background: '#fef2f2', borderRadius: '6px', textAlign: 'center', border: '1px solid #fecaca' }}>
+              ❤️ إجمالي العجز المتبقي: <span style={{ color: '#ef4444', fontSize: '16px' }}>{totalDeficit}</span>
+            </div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>

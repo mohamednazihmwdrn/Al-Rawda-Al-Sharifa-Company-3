@@ -1012,6 +1012,25 @@ export default function App() {
     showToast(`تم إقرار صرف عدد ${qty} من الصنف ${order.item}`, 'success');
   };
 
+  const handleReopenDispatchItem = (orderId: number) => {
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              status: 'قيد الانتظار',
+              source: '',
+              dispatchQty: undefined,
+              remainingQty: o.qty,
+              isDispatched: false,
+              dispatchDate: undefined,
+            }
+          : o
+      )
+    );
+    showToast('🔓 تم إلغاء الصرف وإعادة فتح الصنف للتعديل والمطابقة', 'warning');
+  };
+
   const handleCloseWarehouseInvoice = async (warehouseName: string) => {
     const dispatches = orders.filter(
       (o) =>
@@ -1703,6 +1722,7 @@ export default function App() {
           receivedInvoices={receivedInvoices}
           closedInvoices={closedInvoices}
           onDispatchItem={handleDispatchItem}
+          onReopenDispatchItem={handleReopenDispatchItem}
           onCloseWarehouseInvoice={handleCloseWarehouseInvoice}
           onReceiveReturnItem={handleReceiveReturnItem}
           onViewInvoice={handleViewInvoice}

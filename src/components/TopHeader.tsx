@@ -70,6 +70,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         <p>المسؤول المباشر: {currentUser?.name || ''}</p>
       </div>
       <div className="header-actions">
+        <button className="btn-refresh-header" onClick={() => window.location.reload()}>
+          🔄 تحديث البيانات
+        </button>
         <button className="btn-logout-header" onClick={onLogout}>
           🚪 تسجيل الخروج
         </button>

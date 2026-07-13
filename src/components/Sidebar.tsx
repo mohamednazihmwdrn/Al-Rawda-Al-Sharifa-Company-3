@@ -37,10 +37,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       if (
         tabId === `${k}-branch` ||
         tabId === `${k}-returns` ||
-        tabId === `${k}-archive-sent` ||
         tabId === `${k}-archive-rec` ||
         tabId === `${k}-archive-returns` ||
-        tabId === `${k}-detailed-received`
+        tabId === `${k}-detailed-received` ||
+        tabId === 'nadi-wh' ||
+        tabId === 'nahas-wh' ||
+        tabId === 'merged-returns-wh'
       ) {
         return true;
       }
@@ -52,7 +54,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       if (
         tabId === `${k}-wh` ||
         tabId === 'merged-returns-wh' ||
-        tabId === `${k}-archive-rec` ||
         tabId === `${k}-archive-disp` ||
         tabId === `${k}-archive-returns` ||
         tabId === 'merged-archive'
