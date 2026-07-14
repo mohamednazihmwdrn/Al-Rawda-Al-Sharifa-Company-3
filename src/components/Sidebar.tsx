@@ -300,6 +300,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </>
       )}
 
+      {/* Privacy Policy & IP for all users */}
+      <div className="menu-group-title">🛡️ الأمان وحقوق الملكية</div>
+      <ul className="sidebar-menu">
+        <li
+          className="menu-item"
+          onClick={onShowPrivacy}
+          style={{ cursor: 'pointer' }}
+        >
+          🛡️ سياسة الخصوصية وحقوق الملكية
+        </li>
+      </ul>
+
       <div className="sidebar-footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <button
           onClick={onShowPrivacy}

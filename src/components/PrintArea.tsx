@@ -21,9 +21,9 @@ export const PrintArea: React.FC<PrintAreaProps> = ({ printContent }) => {
         style={{ direction: 'rtl' }}
         dangerouslySetInnerHTML={{ __html: printContent.html }}
       />
-      <div className="print-footer" style={{ display: 'none' }}>
+      <div className="print-footer">
         <div style={{ fontWeight: 'bold', color: '#000' }}>🏛️ شركة الروضة الشريفة</div>
-        <div style={{ direction: 'rtl', fontWeight: 'bold' }}>المطور: Mohamed Nazih (هاتف: 01029190615) - جميع حقوق الملكية محفوظة ©</div>
+        <div style={{ direction: 'rtl', fontWeight: 'bold' }}>حقوق الملكية الفكرية محفوظة لمطور النظام Mohamed Nazih ورقم هاتفي 01029190615 ©</div>
       </div>
     </div>
   );

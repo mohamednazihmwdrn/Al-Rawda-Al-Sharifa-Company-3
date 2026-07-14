@@ -486,19 +486,26 @@ export default function App() {
     try {
       const printWindow = window.open('', '_blank');
       if (printWindow) {
+        // Detect if the HTML indicates it should start compact
+        const startCompact = html.includes('compact-table');
+
         printWindow.document.write(`
           <!DOCTYPE html>
           <html lang="ar" dir="rtl">
           <head>
             <meta charset="UTF-8">
             <title>${title}</title>
+            <style id="pageStyle">
+              @page {
+                size: A4 portrait;
+                margin: 10mm !important;
+              }
+            </style>
             <style>
-              @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
-              
-              /* Disable all transforms, filters, and shadows that lead to jagged or rasterized pixelated lines */
+              /* Base styles */
               * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
+                -webkit-print-color-adjust: economy !important;
+                print-color-adjust: economy !important;
                 transform: none !important;
                 filter: none !important;
                 box-shadow: none !important;
@@ -508,201 +515,483 @@ export default function App() {
                 will-change: auto !important;
               }
 
-              /* Base body styling */
               body {
-                font-family: 'Cairo', 'Inter', system-ui, -apple-system, sans-serif;
+                font-family: Arial, sans-serif;
                 direction: rtl;
-                padding: 15px;
-                background: white !important;
+                padding: 0;
+                margin: 0;
+                background: #ffffff !important;
                 color: #000000 !important;
                 -webkit-font-smoothing: antialiased;
                 -moz-osx-font-smoothing: grayscale;
               }
 
               .print-container {
-                width: 100%;
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 auto !important;
+                padding: 0px !important;
+                box-sizing: border-box !important;
+                page-break-inside: auto !important;
+                break-inside: auto !important;
               }
 
               /* Header styling */
               .header {
                 text-align: center;
                 border-bottom: 2px solid #000000 !important;
-                padding-bottom: 6px !important;
-                margin-bottom: 10px !important;
+                padding-bottom: 4px !important;
+                margin-bottom: 8px !important;
               }
               .company-name-main {
                 font-size: 14px;
-                font-weight: 700;
+                font-weight: bold;
                 color: #000000;
-                margin: 0 0 1px 0;
+                margin: 0;
               }
               .company-sub {
-                font-size: 9.5px;
-                color: #111111;
-                margin-bottom: 5px;
+                display: none !important;
               }
               .header h1 {
-                font-size: 12px;
-                margin: 3px 0 1px 0;
-                font-weight: 700;
+                font-size: 13px;
+                margin: 2px 0;
+                font-weight: bold;
                 color: #000000;
               }
               .header h2 {
-                font-size: 9.5px;
+                font-size: 9px;
                 font-weight: normal;
-                color: #222222;
+                color: #000000;
                 margin: 0;
               }
 
               /* High-precision crisp table styling */
               table {
                 width: 100% !important;
+                table-layout: fixed !important;
                 border-collapse: collapse !important;
-                margin-top: 6px !important;
+                margin-top: 5px !important;
                 direction: rtl;
                 border: 1px solid #000000 !important;
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
+                background-color: #ffffff !important;
+                page-break-inside: auto !important;
+                break-inside: auto !important;
+              }
+              thead {
+                display: table-header-group !important;
               }
               tr {
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
               }
               th, td {
                 border: 1px solid #000000 !important;
-                padding: 1.5px 3px !important;
-                font-size: 7.5pt !important;
-                line-height: 1.1 !important;
+                padding: 4px 6px !important;
+                font-size: 9.5pt !important;
+                line-height: 1.15 !important;
                 text-align: center !important;
                 vertical-align: middle !important;
                 word-wrap: break-word !important;
                 white-space: normal !important;
-                image-rendering: -webkit-optimize-contrast !important;
-                image-rendering: crisp-edges !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
               }
               th {
-                background-color: #f2f2f2 !important;
                 font-weight: bold !important;
-                font-size: 8pt !important;
-                white-space: nowrap !important;
-              }
-              tr:nth-child(even) {
-                background-color: #fcfcfc !important;
+                font-size: 10pt !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
               }
               td strong {
-                font-weight: 700 !important;
-                font-size: 7.5pt !important;
+                font-weight: bold !important;
+                font-size: 10pt !important;
+              }
+
+              /* Compact styling to comfortably fit up to 50 rows on a single page */
+              .compact-table th, 
+              .compact-table td {
+                padding: 1.2px 2.5px !important;
+                font-size: 7.2pt !important;
+                line-height: 1.02 !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+              }
+              .compact-table th {
+                font-size: 7.8pt !important;
+              }
+              .compact-table td strong {
+                font-size: 7.2pt !important;
+              }
+              .compact-table .badge {
+                padding: 0px 2px !important;
+                font-size: 6.5pt !important;
+              }
+              .compact-table + .summary-box-print {
+                margin-top: 6px !important;
+                padding: 4px !important;
+                gap: 4px !important;
+              }
+              .compact-table + .summary-box-print div {
+                padding: 3px !important;
+                font-size: 7.8pt !important;
               }
 
               /* Column widths to fit >50 items comfortably */
               th:nth-child(1), td:nth-child(1) {
-                width: 25px !important;
+                width: 4% !important;
                 white-space: nowrap !important;
+                text-align: center !important;
               }
               th:nth-child(2), td:nth-child(2) {
+                width: 44% !important;
                 text-align: right !important;
                 white-space: normal !important;
                 word-break: break-word !important;
               }
-              th:nth-child(3), td:nth-child(3),
-              th:nth-child(4), td:nth-child(4),
-              th:nth-child(5), td:nth-child(5),
-              th:nth-child(6), td:nth-child(6),
+              th:nth-child(3), td:nth-child(3) {
+                width: 10% !important;
+                text-align: center !important;
+                white-space: normal !important;
+              }
+              th:nth-child(4), td:nth-child(4) {
+                width: 10% !important;
+                text-align: center !important;
+                white-space: normal !important;
+              }
+              th:nth-child(5), td:nth-child(5) {
+                width: 10% !important;
+                text-align: center !important;
+                white-space: normal !important;
+              }
+              th:nth-child(6), td:nth-child(6) {
+                width: 10% !important;
+                text-align: center !important;
+                white-space: normal !important;
+              }
               th:nth-child(7), td:nth-child(7) {
-                white-space: nowrap !important;
+                width: 12% !important;
+                text-align: center !important;
+                white-space: normal !important;
               }
 
               /* Badge styling */
-              .badge {
+              .badge, .badge-success, .badge-pending, .badge-danger {
                 display: inline-block !important;
-                padding: 1px 3px !important;
-                border-radius: 2px !important;
-                font-size: 7.5pt !important;
-                border: 1px solid #000000 !important;
-                background: transparent !important;
+                padding: 1.5px 3px !important;
+                border-radius: 1px !important;
+                font-size: 8.5pt !important;
+                border: none !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                white-space: nowrap !important;
+              }
+
+              /* Screen only footer style - make it visible on screen too */
+              .print-footer {
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                border-top: 1.5px solid #000000 !important;
+                padding-top: 6px !important;
+                margin-top: 25px !important;
+                font-size: 9.5pt !important;
+                font-weight: bold !important;
                 color: #000000 !important;
               }
 
-              /* Screen only footer */
-              .print-footer {
-                display: none;
-              }
-
-              /* Print-specific optimizations */
+              /* Print-specific optimizations (Strict Black and White & Ultra Compact 50 Rows Single Page) */
               @media print {
-                @page {
-                  size: A4 portrait;
-                  margin: 5mm 5mm 12mm 5mm !important;
+                /* Strip all backgrounds and force clean white with sharp black ink */
+                * {
+                  background: #ffffff !important;
+                  background-color: #ffffff !important;
+                  color: #000000 !important;
+                  box-shadow: none !important;
+                  text-shadow: none !important;
+                  -webkit-print-color-adjust: economy !important;
+                  print-color-adjust: economy !important;
                 }
+
                 body {
                   padding: 0 !important;
                   margin: 0 !important;
                   font-size: 7.5pt !important;
-                  line-height: 1.1 !important;
+                  line-height: 1.05 !important;
+                  background: #ffffff !important;
+                  color: #000000 !important;
                 }
+
                 .print-container {
-                  page-break-inside: avoid !important;
-                  break-inside: avoid !important;
+                  padding: 0 !important;
+                  margin: 0 !important;
+                  width: 100% !important;
+                  max-width: 100% !important;
+                  page-break-inside: auto !important;
+                  break-inside: auto !important;
                 }
+
                 .header {
-                  padding-bottom: 4px !important;
+                  padding-bottom: 3px !important;
                   margin-bottom: 6px !important;
+                  border-bottom: 1.5px solid #000000 !important;
                 }
+
                 .company-name-main {
-                  font-size: 12px !important;
+                  font-size: 13px !important;
+                  font-weight: bold !important;
+                  margin: 0 !important;
                 }
+
                 .company-sub {
-                  font-size: 8.5px !important;
-                  margin-bottom: 3px !important;
+                  display: none !important; /* hide non-essential details to gain vertical space */
                 }
+
                 .header h1 {
                   font-size: 11px !important;
-                  margin: 2px 0 1px 0 !important;
+                  margin: 1px 0 !important;
+                  font-weight: bold !important;
                 }
+
                 .header h2 {
                   font-size: 8.5px !important;
+                  margin: 0 !important;
                 }
+
+                /* Fixed table layouts and borders to support 50 rows comfortably on 1 page */
                 table {
+                  width: 100% !important;
+                  table-layout: fixed !important;
+                  border-collapse: collapse !important;
                   margin-top: 4px !important;
-                  page-break-inside: avoid !important;
-                  break-inside: avoid !important;
+                  border: 1px solid #000000 !important;
+                  background-color: #ffffff !important;
+                  page-break-inside: auto !important;
+                  break-inside: auto !important;
                 }
+
+                thead {
+                  display: table-header-group !important;
+                }
+
                 tr {
                   page-break-inside: avoid !important;
                   break-inside: avoid !important;
+                  background: #ffffff !important;
+                  background-color: #ffffff !important;
                 }
+
                 th, td {
-                  padding: 1.5px 3px !important;
-                  font-size: 7.5pt !important;
-                  line-height: 1.1 !important;
+                  border: 1px solid #000000 !important;
+                  padding: 1.2px 2.5px !important; /* ultra tight vertical padding */
+                  font-size: 7.2pt !important;
+                  line-height: 1.02 !important;
+                  text-align: center !important;
+                  vertical-align: middle !important;
+                  word-wrap: break-word !important;
+                  white-space: normal !important;
+                  background: #ffffff !important;
+                  background-color: #ffffff !important;
+                  color: #000000 !important;
                 }
+
                 th {
                   font-size: 8pt !important;
+                  font-weight: bold !important;
+                  white-space: normal !important;
+                  background: #ffffff !important;
+                  background-color: #ffffff !important;
                 }
+
+                td strong {
+                  font-weight: bold !important;
+                  font-size: 7.2pt !important;
+                  color: #000000 !important;
+                }
+
+                /* Proportional column widths for perfect printing without overlapping */
+                th:nth-child(1), td:nth-child(1) {
+                  width: 4% !important;
+                  white-space: nowrap !important;
+                  text-align: center !important;
+                }
+                th:nth-child(2), td:nth-child(2) {
+                  width: 44% !important;
+                  text-align: right !important;
+                  white-space: normal !important;
+                  word-break: break-word !important;
+                }
+                th:nth-child(3), td:nth-child(3) {
+                  width: 10% !important;
+                  text-align: center !important;
+                  white-space: normal !important;
+                }
+                th:nth-child(4), td:nth-child(4) {
+                  width: 10% !important;
+                  text-align: center !important;
+                  white-space: normal !important;
+                }
+                th:nth-child(5), td:nth-child(5) {
+                  width: 10% !important;
+                  text-align: center !important;
+                  white-space: normal !important;
+                }
+                th:nth-child(6), td:nth-child(6) {
+                  width: 10% !important;
+                  text-align: center !important;
+                  white-space: normal !important;
+                }
+                th:nth-child(7), td:nth-child(7) {
+                  width: 12% !important;
+                  text-align: center !important;
+                  white-space: normal !important;
+                }
+
+                /* Print badges: pure black outlines, no color filling, no shadows */
+                .badge, .badge-success, .badge-pending, .badge-danger {
+                  display: inline-block !important;
+                  padding: 0.5px 2px !important;
+                  border-radius: 1px !important;
+                  font-size: 6.8pt !important;
+                  border: none !important;
+                  background: #ffffff !important;
+                  background-color: #ffffff !important;
+                  color: #000000 !important;
+                  white-space: nowrap !important;
+                }
+
                 .no-print {
                   display: none !important;
                 }
+
+                /* Total Summary Boxes: Simple Black & White grid with outlines */
+                .summary-box-print {
+                  margin-top: 6px !important;
+                  padding: 4px !important;
+                  background: #ffffff !important;
+                  background-color: #ffffff !important;
+                  border: 1px solid #000000 !important;
+                  display: grid !important;
+                  grid-template-columns: repeat(4, 1fr) !important;
+                  gap: 4px !important;
+                  page-break-inside: avoid !important;
+                  break-inside: avoid !important;
+                }
+
+                .summary-box-print div {
+                  padding: 3px !important;
+                  background: #ffffff !important;
+                  background-color: #ffffff !important;
+                  border: 1px solid #000000 !important;
+                  color: #000000 !important;
+                  font-size: 7.8pt !important;
+                  text-align: center !important;
+                }
+
+                .summary-box-print div span {
+                  color: #000000 !important;
+                  font-size: 8.5pt !important;
+                  font-weight: bold !important;
+                }
+
                 .print-footer {
                   display: flex !important;
                   position: fixed !important;
-                  bottom: -8mm !important;
+                  bottom: 0px !important;
                   left: 0 !important;
                   right: 0 !important;
                   justify-content: space-between !important;
                   align-items: center !important;
-                  border-top: 1.5px solid #000000 !important;
-                  padding-top: 3px !important;
-                  font-size: 8pt !important;
-                  font-family: 'Cairo', sans-serif !important;
-                  background: white !important;
+                  border-top: 1px solid #000000 !important;
+                  padding-top: 2px !important;
+                  font-size: 7.5pt !important;
+                  background: #ffffff !important;
                   color: #000000 !important;
                 }
               }
             </style>
+            <script>
+              function setPaperSize(size) {
+                var styleEl = document.getElementById('pageStyle');
+                if (size === 'A4') {
+                  styleEl.innerHTML = '@page { size: A4 portrait; margin: 4mm 4mm 8mm 4mm !important; }';
+                } else if (size === 'A5') {
+                  styleEl.innerHTML = '@page { size: A5 portrait; margin: 4mm 4mm 6mm 4mm !important; }';
+                }
+              }
+              function setDensity(density) {
+                var table = document.getElementById('printable-table');
+                var lblNormal = document.getElementById('labelNormal');
+                var lblCompact = document.getElementById('labelCompact');
+                if (!table) return;
+                if (density === 'compact') {
+                  table.classList.add('compact-table');
+                  if (lblCompact) {
+                    lblCompact.style.borderColor = '#10b981';
+                    lblCompact.style.color = '#065f46';
+                    lblCompact.style.borderWidth = '2px';
+                  }
+                  if (lblNormal) {
+                    lblNormal.style.borderColor = '#cbd5e1';
+                    lblNormal.style.color = '#475569';
+                    lblNormal.style.borderWidth = '1px';
+                  }
+                } else {
+                  table.classList.remove('compact-table');
+                  if (lblNormal) {
+                    lblNormal.style.borderColor = '#3b82f6';
+                    lblNormal.style.color = '#1e3a8a';
+                    lblNormal.style.borderWidth = '2px';
+                  }
+                  if (lblCompact) {
+                    lblCompact.style.borderColor = '#cbd5e1';
+                    lblCompact.style.color = '#475569';
+                    lblCompact.style.borderWidth = '1px';
+                  }
+                }
+              }
+            </script>
           </head>
           <body dir="rtl">
+            <div class="print-controls no-print" style="background: #f1f5f9; padding: 12px 20px; border-bottom: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: space-between; gap: 15px; direction: rtl; font-family: 'Cairo', sans-serif; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.03);">
+              <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-weight: bold; color: #1e293b; font-size: 13.5px;">🖨️ مقاس الورق:</span>
+                  <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; background: white; padding: 5px 12px; border-radius: 6px; border: 2px solid #3b82f6; font-size: 12.5px; font-weight: bold; color: #1e3a8a;" id="lblA4">
+                    <input type="radio" name="pageSize" value="A4" checked onchange="setPaperSize('A4')">
+                    <span>📄 A4</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; background: white; padding: 5px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12.5px; font-weight: bold; color: #475569;" id="lblA5">
+                    <input type="radio" name="pageSize" value="A5" onchange="setPaperSize('A5')">
+                    <span>📄 A5</span>
+                  </label>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-weight: bold; color: #1e293b; font-size: 13.5px;">⚖️ نمط العرض:</span>
+                  <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; background: white; padding: 5px 12px; border-radius: 6px; border: ${startCompact ? '1px solid #cbd5e1' : '2px solid #3b82f6'}; font-size: 12.5px; font-weight: bold; color: ${startCompact ? '#475569' : '#1e3a8a'};" id="labelNormal">
+                    <input type="radio" name="density" value="normal" ${startCompact ? '' : 'checked'} onchange="setDensity('normal')">
+                    <span>✨ عادي</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; background: white; padding: 5px 12px; border-radius: 6px; border: ${startCompact ? '2px solid #10b981' : '1px solid #cbd5e1'}; font-size: 12.5px; font-weight: bold; color: ${startCompact ? '#065f46' : '#475569'};" id="labelCompact">
+                    <input type="radio" name="density" value="compact" ${startCompact ? 'checked' : ''} onchange="setDensity('compact')">
+                    <span>⚡ مضغوط جداً (يضمن ملاءمة 50 صنف في صفحة)</span>
+                  </label>
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <button onclick="window.print()" style="background: #2563eb; color: white; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);">
+                  🖨️ طباعة المستند
+                </button>
+                <button onclick="window.close()" style="background: #64748b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; font-size: 13px;">
+                  إغلاق النافذة
+                </button>
+              </div>
+            </div>
+
             <div class="print-container">
               <div class="header">
                 <div class="company-name-main">شركة الروضة الشريفة</div>
@@ -713,13 +1002,13 @@ export default function App() {
             </div>
             <div class="print-footer">
               <div style="font-weight: bold; color: #000000;">🏛️ شركة الروضة الشريفة</div>
-              <div style="direction: rtl; font-weight: bold; color: #000000;">المطور: Mohamed Nazih (هاتف: 01029190615) - جميع حقوق الملكية محفوظة ©</div>
+              <div style="direction: rtl; font-weight: bold; color: #000000;">حقوق الملكية الفكرية محفوظة لمطور النظام Mohamed Nazih ورقم هاتفي 01029190615 ©</div>
             </div>
             <script>
               window.onload = function() {
                 setTimeout(() => {
                   window.print();
-                }, 350);
+                }, 400);
               };
             </script>
           </body>
@@ -1488,61 +1777,158 @@ export default function App() {
     if (!invoiceView) return;
     const view = invoiceView;
 
+    // Group the items exactly like WarehousePanels.tsx does
+    const itemGroups: Record<string, {
+      item: string;
+      requestedQty: number;
+      nadiQty: number;
+      nahasQty: number;
+      deficitQty: number;
+      statusText: string;
+      badgeClass: string;
+    }> = {};
+
+    const invoiceCode = view.invoiceCode || '';
+    const matchedOrders = orders.filter(o => o.invoiceCode === invoiceCode);
+
+    if (matchedOrders.length > 0) {
+      matchedOrders.forEach(o => {
+        const name = o.item;
+        if (!itemGroups[name]) {
+          itemGroups[name] = {
+            item: name,
+            requestedQty: 0,
+            nadiQty: 0,
+            nahasQty: 0,
+            deficitQty: 0,
+            statusText: 'قيد الانتظار',
+            badgeClass: 'badge-pending'
+          };
+        }
+        itemGroups[name].requestedQty += o.qty;
+        
+        if (o.status === 'تم الصرف' || o.status === 'تم الأرشفة') {
+          const dispatched = o.dispatchQty || 0;
+          if (o.source === 'مخزن النادي') {
+            itemGroups[name].nadiQty += dispatched;
+          } else if (o.source === 'مخزن النحاس') {
+            itemGroups[name].nahasQty += dispatched;
+          } else {
+            itemGroups[name].nadiQty += dispatched;
+          }
+        }
+      });
+    } else {
+      view.items.forEach(it => {
+        const name = it.item;
+        if (!itemGroups[name]) {
+          itemGroups[name] = {
+            item: name,
+            requestedQty: it.qty || 0,
+            nadiQty: 0,
+            nahasQty: 0,
+            deficitQty: 0,
+            statusText: 'قيد الانتظار',
+            badgeClass: 'badge-pending'
+          };
+        }
+        const disp = it.dispatchQty || 0;
+        const src = it.source || it.warehouse || view.originWh || '';
+        if (src.includes('النادي')) {
+          itemGroups[name].nadiQty += disp;
+        } else if (src.includes('النحاس')) {
+          itemGroups[name].nahasQty += disp;
+        } else {
+          itemGroups[name].nadiQty += disp;
+        }
+      });
+    }
+
+    const groupedItems = Object.values(itemGroups).map(g => {
+      const totalDisp = g.nadiQty + g.nahasQty;
+      g.deficitQty = Math.max(0, g.requestedQty - totalDisp);
+      if (totalDisp >= g.requestedQty) {
+        g.statusText = 'واصل كامل';
+        g.badgeClass = 'badge-success';
+      } else if (totalDisp > 0) {
+        g.statusText = 'واصل جزئي';
+        g.badgeClass = 'badge-pending';
+      } else {
+        g.statusText = 'لم يصل / قيد الانتظار';
+        g.badgeClass = 'badge-danger';
+      }
+      return g;
+    });
+
+    const totalQty = groupedItems.reduce((sum, item) => sum + item.requestedQty, 0);
+    const totalNadi = groupedItems.reduce((sum, item) => sum + item.nadiQty, 0);
+    const totalNahas = groupedItems.reduce((sum, item) => sum + item.nahasQty, 0);
+    const totalDeficit = groupedItems.reduce((sum, item) => sum + item.deficitQty, 0);
+
+    const isCompact = groupedItems.length > 15;
+
     let htmlTable = `
-      <div style="font-size:12px; margin-bottom:12px; direction:rtl; line-height: 1.5; font-family:'Cairo', 'Inter', sans-serif;">
-          <span style="margin-left: 25px;">🏢 الجهة المستفيدة: <strong>${view.destinationBranch}</strong></span>
-          <span>📦 المخازن الموردة: <strong>${view.originWh}</strong></span>
+      <div style="font-size:12px; margin-bottom:12px; direction:rtl; line-height: 1.5; font-family:'Cairo', 'Inter', sans-serif; display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 8px;">
+          <span>🏢 الجهة الطالبة (المعرض المستلم): <strong style="font-size: 13.5px; color: #1e293b;">${view.destinationBranch}</strong></span>
+          <span>📦 حالة التنسيق: <strong style="color: #16a34a;">تغطية مدمجة (النادي + النحاس)</strong></span>
       </div>
-      <table style="width:100%; border-collapse:collapse; margin-top:5px; direction:rtl; font-family:'Cairo', 'Inter', sans-serif;">
+      <table id="printable-table" class="${isCompact ? 'compact-table' : ''}" style="width:100%; border-collapse:collapse; margin-top:5px; direction:rtl; font-family:'Cairo', 'Inter', sans-serif;">
           <thead>
               <tr>
-                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">#</th>
-                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; text-align:right;">الصنف</th>
-                  ${view.type === 'wh_received' ? `
-                    <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">المعرض الطالب</th>
-                    <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">المستودع المورد</th>
-                  ` : (view.type !== 'sent' ? `<th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">${view.type === 'received' ? 'المخزن المورد' : 'المعرض المخرج له'}</th>` : '')}
-                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">الكمية المطلوبة</th>
-                  ${view.type !== 'sent' ? '<th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">المنصرف فعلياً</th>' : ''}
-                  ${view.type !== 'sent' ? '<th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">المتبقي / العجز</th>' : ''}
-                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2;">بيان موقف وتدقيق الصنف</th>
+                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; width: 40px; text-align: center;">#</th>
+                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; text-align:right;">اسم ومواصفات الصنف المعني بالطلب</th>
+                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; width: 110px; text-align: center;">الكمية المطلوبة الكلية</th>
+                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; width: 110px; text-align: center; color: #4f46e5;">صرف مخزن النادي</th>
+                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; width: 110px; text-align: center; color: #0891b2;">صرف مخزن النحاس</th>
+                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; width: 110px; text-align: center; color: #dc2626;">العجز / المتبقي الكلي</th>
+                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; width: 140px; text-align: center;">حالة التوريد وموقف الصنف</th>
               </tr>
           </thead>
           <tbody>
     `;
 
-    view.items.forEach((item, index) => {
-      let req = item.qty || 0;
-      let disp = item.dispatchQty !== undefined ? item.dispatchQty : 0;
-      let remaining = req - disp;
-      let itemWh = item.source || item.warehouse || 'قيد الانتظار بالمخزن';
-      let stateText = '';
-      if (view.type === 'sent') {
-        stateText = (item.status === 'تم الأرشفة' || item.status === 'تم الصرف') ? 'مرسل بالكامل' : 'مرسل';
-      } else {
-        stateText = disp >= req ? 'واصل كامل' : 'واصل جزئي';
-      }
+    groupedItems.forEach((item, index) => {
+      let badgeClass = 'badge-pending';
+      if (item.badgeClass === 'badge-success') badgeClass = 'badge-success';
+      else if (item.badgeClass === 'badge-danger') badgeClass = 'badge-danger';
 
       htmlTable += `
           <tr>
-              <td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${index + 1}</td>
-              <td style="border:1px solid #000; padding:5px 6px; text-align:right; font-size:11px;"><strong>${item.item}</strong></td>
-              ${view.type === 'wh_received' ? `
-                <td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${item.branch || view.destinationBranch}</td>
-                <td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${itemWh}</td>
-              ` : (view.type !== 'sent' ? `<td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${view.type === 'received' ? itemWh : (item.branch || view.destinationBranch)}</td>` : '')}
-              <td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${req}</td>
-              <td style="border:1px solid #000; padding:5px 6px; text-align:center; font-size:11px;">${disp}</td>
-              <td style="border:1px solid #000; padding:5px 6px; text-align:center; color:red; font-size:11px;">${remaining}</td>
-              <td style="border:1px solid #000; padding:5px 6px; font-size:11px; text-align:center;">${stateText}</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center;">${index + 1}</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:right;"><strong>${item.item}</strong></td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; font-weight: bold;">${item.requestedQty}</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; color:#4f46e5; font-weight: bold;">${item.nadiQty}</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; color:#0891b2; font-weight: bold;">${item.nahasQty}</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; color:${item.deficitQty > 0 ? '#dc2626' : '#475569'}; font-weight: bold; background-color:${item.deficitQty > 0 ? '#fef2f2' : 'transparent'};">${item.deficitQty}</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center;">
+                <span class="badge ${badgeClass}">${item.statusText}</span>
+              </td>
           </tr>
       `;
     });
 
-    htmlTable += `</tbody></table>`;
+    htmlTable += `
+          </tbody>
+      </table>
+
+      <div class="summary-box-print" style="margin-top:15px; padding:10px; background:#e2e8f0; border-radius:6px; display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-family:'Cairo', sans-serif; font-weight:bold; font-size:11px; color:#1e293b; border:1px solid #cbd5e1; page-break-inside: avoid !important; break-inside: avoid !important;">
+        <div style="padding:6px; background:white; border-radius:4px; text-align:center; border:1px solid #cbd5e1;">
+          📊 إجمالي المطلوب: <span style="color:#475569; font-size:13px;">${totalQty}</span>
+        </div>
+        <div style="padding:6px; background:#faf5ff; border-radius:4px; text-align:center; border:1px solid #e9d5ff; color: #4f46e5;">
+          💜 إجمالي صرف النادي: <span style="font-size:13px;">${totalNadi}</span>
+        </div>
+        <div style="padding:6px; background:#ecfeff; border-radius:4px; text-align:center; border:1px solid #c5f2f7; color: #0891b2;">
+          🩵 إجمالي صرف النحاس: <span style="font-size:13px;">${totalNahas}</span>
+        </div>
+        <div style="padding:6px; background:#fef2f2; border-radius:4px; text-align:center; border:1px solid #fecaca; color: #dc2626;">
+          ❤️ إجمالي العجز المتبقي: <span style="font-size:13px;">${totalDeficit}</span>
+        </div>
+      </div>
+    `;
 
     printHtmlSafe(
-      `بيان نواقص رقم: [ ${view.invoiceCode} ]`,
+      `الفاتورة الكلية رقم: [ ${view.invoiceCode} ]`,
       `التاريخ: ${view.dateStr || getToday()}`,
       htmlTable,
       isPdf
@@ -1807,100 +2193,97 @@ export default function App() {
               <button
                 className="btn"
                 style={{
-                  backgroundColor: 'var(--primary-blue, #6366f1)',
+                  backgroundColor: '#94a3b8',
                   color: '#ffffff',
-                  padding: '10px 22px',
-                  borderRadius: '8px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
                   border: 'none',
-                  fontSize: '14px',
+                  cursor: 'pointer',
                 }}
-                onClick={() => confirmState.resolve(true)}
+                onClick={() => confirmState.resolve(false)}
               >
-                تأكيد ومتابعة
+                إلغاء
               </button>
               <button
                 className="btn"
                 style={{
-                  backgroundColor: '#f3f4f6',
-                  color: '#374151',
-                  padding: '10px 22px',
-                  borderRadius: '8px',
-                  fontWeight: '600',
+                  backgroundColor: '#3b82f6',
+                  color: '#ffffff',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  border: 'none',
                   cursor: 'pointer',
-                  border: '1px solid #e5e7eb',
-                  fontSize: '14px',
                 }}
-                onClick={() => confirmState.resolve(false)}
+                onClick={() => confirmState.resolve(true)}
               >
-                إلغاء التراجع
+                تأكيد
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Comprehensive Privacy Policy Modal */}
+      {/* Privacy Policy & IP Modal */}
       {showPrivacyModal && (
         <div
           id="privacy-policy-modal"
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.8)',
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 99999,
+            zIndex: 99998,
             padding: '16px',
-            backdropFilter: 'blur(8px)',
+            backdropFilter: 'blur(4px)',
           }}
           dir="rtl"
         >
           <div
             style={{
               backgroundColor: '#ffffff',
-              borderRadius: '20px',
-              maxWidth: '680px',
+              borderRadius: '16px',
+              maxWidth: '850px',
               width: '100%',
-              maxHeight: '85vh',
+              maxHeight: '90vh',
               display: 'flex',
               flexDirection: 'column',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
-              border: '1px solid rgba(226, 232, 240, 0.8)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #f1f5f9',
               overflow: 'hidden',
-              animation: 'modalFadeIn 0.3s ease-out',
+              animation: 'modalFadeIn 0.3s ease-out'
             }}
           >
             {/* Modal Header */}
             <div
               style={{
-                backgroundColor: 'var(--primary-dark, #1e293b)',
-                color: '#ffffff',
                 padding: '20px 24px',
+                borderBottom: '1px solid #e2e8f0',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                borderBottom: '4px solid var(--accent, #3b82f6)',
+                backgroundColor: '#f8fafc',
               }}
             >
-              <h2 style={{ fontSize: '20px', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                🛡️ وثيقة سياسة الخصوصية وحقوق الملكية للنظام
+              <h2 style={{ fontSize: '18px', fontWeight: '850', color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🛡️ سياسة الخصوصية وحقوق الملكية الفكرية
               </h2>
               <button
                 onClick={() => setShowPrivacyModal(false)}
                 style={{
-                  background: 'none',
                   border: 'none',
-                  color: '#ffffff',
-                  fontSize: '24px',
+                  background: 'none',
+                  fontSize: '20px',
+                  color: '#64748b',
                   cursor: 'pointer',
-                  padding: '4px',
-                  lineHeight: '1',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
                 }}
               >
-                &times;
+                ✕
               </button>
             </div>
 
@@ -1909,75 +2292,116 @@ export default function App() {
               style={{
                 padding: '24px',
                 overflowY: 'auto',
-                fontSize: '14.5px',
+                fontSize: '14px',
                 lineHeight: '1.8',
                 color: '#334155',
+                backgroundColor: '#ffffff',
               }}
             >
-              <div style={{ marginBottom: '20px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
-                <p style={{ fontWeight: 'bold', fontSize: '16px', color: '#0f172a', margin: '0 0 8px 0' }}>
-                  مرحباً بكم في نظام إدارة النواقص والمرتجعات الموحد لشركة الروضة الشريفة.
-                </p>
-                <p style={{ margin: 0 }}>
-                  تعتبر خصوصية بياناتكم وسلامة معلوماتكم في صدارة أولوياتنا. تم إعداد هذه الاتفاقية لتوضيح البنود الأمنية، حقوق الملكية الفكرية، وبيانات المطور المعتمد للنظام بشكل تفصيلي لا يقبل التجزئة.
+              {/* Introduction Welcome Banner */}
+              <div style={{
+                marginBottom: '24px',
+                borderBottom: '2px solid #f1f5f9',
+                paddingBottom: '20px',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  display: 'inline-block',
+                  backgroundColor: '#eff6ff',
+                  color: '#2563eb',
+                  padding: '6px 14px',
+                  borderRadius: '9999px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  marginBottom: '12px',
+                  border: '1px solid #bfdbfe'
+                }}>
+                  🛡️ وثيقة رسمية معتمدة
+                </div>
+                <h3 style={{ fontWeight: '850', fontSize: '17px', color: '#0f172a', margin: '0 0 10px 0' }}>
+                  نظام إدارة النواقص والمرتجعات الموحد لشركة الروضة الشريفة
+                </h3>
+                <p style={{ margin: 0, textAlign: 'justify', color: '#475569', fontSize: '13.5px' }}>
+                  إن وثيقة سياسة الخصوصية وحقوق الملكية الفكرية هذه تمثل اتفاقية قانونية وتنظيمية شاملة وملزمة لكافة الأطراف والمستخدمين المصرح لهم بالدخول إلى النظام. نؤكد من خلال هذا البيان على التزامنا الكامل بحماية وتأمين سرية البيانات وسجلات المعاملات، مع توضيح كامل ومفصل لجميع الحقوق البرمجية والأدبية والملكية الحصرية لمطور النظام المعتمد.
                 </p>
               </div>
 
               {/* Section 1 */}
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ fontWeight: '800', color: '#1e293b', fontSize: '15px', margin: '0 0 8px 0', borderRight: '4px solid #3b82f6', paddingRight: '8px' }}>
-                  أولاً: أمن وسلامة وسرية البيانات
+              <div style={{ marginBottom: '24px', backgroundColor: '#fafafa', padding: '16px', borderRadius: '12px', border: '1px solid #f0f0f0' }}>
+                <h4 style={{ fontWeight: '800', color: '#1e293b', fontSize: '14.5px', margin: '0 0 10px 0', borderRight: '4px solid #3b82f6', paddingRight: '8px' }}>
+                  أولاً: أمن وسلامة وسرية البيانات التجارية والعمليات
                 </h4>
-                <p style={{ margin: 0, textAlign: 'justify' }}>
-                  يلتزم النظام بفرض أقصى معايير الحماية لضمان سلامة العمليات التجارية وحركات البضائع بين الفروع والمستودعات. يتم تشفير كلمات المرور الخاصة بالحسابات محلياً، كما يتم تجميع البيانات ومعالجتها بشكل آمن داخل النظام لمنع أي وصول غير مصرح به. النظام مصمم ليعمل بكفاءة عالية مع حفظ السجلات التاريخية والفواتير المؤرشفة والمدمجة بدقة متناهية.
+                <p style={{ margin: 0, textAlign: 'justify', fontSize: '13px', color: '#475569' }}>
+                  يهدف هذا النظام إلى تقديم خدمات ذكاء الأعمال المتقدمة لشركة الروضة الشريفة، ويتم حماية كافة البيانات الحساسة وحركات ترحيل البضائع بين الفروع والمخازن (مخزن النادي ومخزن النحاس) بأقصى درجات السرية. يتم تشفير كلمات المرور والبيانات محلياً وسحابياً عبر خدمات الحماية الفائقة لضمان عدم حدوث أي اختراق أو تسريب لأي معاملة تجارية. يلتزم النظام التزاماً كاملاً بعدم مشاركة أي بيانات تشغيلية أو أصناف أو أرصدة تخص شركة الروضة الشريفة مع أي جهة خارجية أو طرف ثالث تحت أي ظرف من الظروف.
                 </p>
               </div>
 
-              {/* Section 2 */}
-              <div style={{ marginBottom: '20px', backgroundColor: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <h4 style={{ fontWeight: '800', color: '#0f172a', fontSize: '15px', margin: '0 0 10px 0', borderRight: '4px solid #10b981', paddingRight: '8px' }}>
-                  ثانياً: بيانات المطور والدعم الفني المعتمد
+              {/* Section 2 - Highlighted Developer Box */}
+              <div style={{
+                marginBottom: '24px',
+                backgroundColor: '#f0fdf4',
+                padding: '20px',
+                borderRadius: '14px',
+                border: '1px dashed #bbf7d0',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)'
+              }}>
+                <h4 style={{ fontWeight: '900', color: '#166534', fontSize: '15px', margin: '0 0 12px 0', borderRight: '4px solid #15803d', paddingRight: '8px' }}>
+                  ثانياً: بيانات مطور النظام المعتمد وقنوات الدعم الفني
                 </h4>
-                <ul style={{ margin: 0, paddingRight: '18px', listStyleType: 'disc' }}>
-                  <li style={{ marginBottom: '6px' }}>
-                    <strong>اسم المطور المسؤول والمنفذ للنظام بالكامل:</strong> <span style={{ color: '#2563eb', fontWeight: 'bold' }}>Mohamed Nazih (محمد نزيه)</span>
-                  </li>
-                  <li style={{ marginBottom: '6px' }}>
-                    <strong>رقم الهاتف المباشر للتواصل والدعم الفني:</strong> <span style={{ color: '#2563eb', fontWeight: 'bold' }}>01029190615</span>
-                  </li>
-                  <li style={{ marginBottom: '0' }}>
-                    <strong>قنوات تقديم الدعم:</strong> يرجى التواصل هاتفياً أو عبر تطبيق الواتساب للحصول على التحديثات التقنية وحل الأعطال البرمجية الطارئة.
-                  </li>
-                </ul>
+                <p style={{ margin: '0 0 12px 0', textAlign: 'justify', fontSize: '13px', color: '#1e3a1e', fontWeight: '500' }}>
+                  إن مطور النظام والمسؤول التقني والبرمجي الأول والوحيد عن تصميم وبناء وهندسة هذا النظام بالكامل هو:
+                </p>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '12px',
+                  backgroundColor: '#ffffff',
+                  padding: '14px',
+                  borderRadius: '10px',
+                  border: '1px solid #e8f5e9',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{ fontSize: '13px' }}>
+                    <span style={{ color: '#64748b', display: 'block', fontSize: '11px', fontWeight: 'bold' }}>اسم المطور المعتمد:</span>
+                    <strong style={{ color: '#15803d', fontSize: '13.5px' }}>Mohamed Nazih (محمد نزيه)</strong>
+                  </div>
+                  <div style={{ fontSize: '13px' }}>
+                    <span style={{ color: '#64748b', display: 'block', fontSize: '11px', fontWeight: 'bold' }}>رقم الهاتف المباشر والواتساب:</span>
+                    <strong style={{ color: '#2563eb', fontSize: '13.5px' }}>01029190615</strong>
+                  </div>
+                </div>
+                <p style={{ margin: 0, textAlign: 'justify', fontSize: '12.5px', color: '#14532d', lineHeight: '1.6' }}>
+                  يتولى المطور مهام الصيانة المستمرة وتحديث الخوارزميات الرياضية والبرمجية المعقدة المخصصة لترحيل وترصيد ومطابقة البيانات، بالإضافة لتقديم الدعم الفني الكامل والمباشر لتفادي أي عوائق تشغيلية.
+                </p>
               </div>
 
               {/* Section 3 */}
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ fontWeight: '800', color: '#1e293b', fontSize: '15px', margin: '0 0 8px 0', borderRight: '4px solid #3b82f6', paddingRight: '8px' }}>
-                  ثالثاً: حقوق الملكية الفكرية وحفظ الحقوق البرمجية
+              <div style={{ marginBottom: '24px', backgroundColor: '#fafafa', padding: '16px', borderRadius: '12px', border: '1px solid #f0f0f0' }}>
+                <h4 style={{ fontWeight: '800', color: '#1e293b', fontSize: '14.5px', margin: '0 0 10px 0', borderRight: '4px solid #3b82f6', paddingRight: '8px' }}>
+                  ثالثاً: حقوق الملكية الفكرية وحفظ الحقوق البرمجية والمصدرية
                 </h4>
-                <p style={{ margin: 0, textAlign: 'justify' }}>
-                  إن الهيكل البرمجي بالكامل، قواعد البيانات، الواجهات الرسومية، والخورازميات الذكية المستخدمة في دمج وترحيل وحساب العجز الكلي للنواقص هي ملكية فكرية مطلقة وحصرية للمطور المعتمد <strong style={{ color: '#0f172a' }}>Mohamed Nazih</strong>. جميع حقوق النشر والتأليف والملكية محفوظة بالكامل لصالحه ©. يمنع منعاً باتاً استنساخ الكود المصدري للنظام، أو إعادة توزيعه، أو تعديله، أو بيعه لجهات أخرى دون الحصول على إذن كتابي رسمي وموقع من المطور شخصياً.
+                <p style={{ margin: 0, textAlign: 'justify', fontSize: '13px', color: '#475569' }}>
+                  إن الكود المصدري (Source Code) بالكامل، وقواعد البيانات وهياكلها البرمجية، وتصميمات واجهات المستخدم المبتكرة، والخوارزميات البرمجية المخصصة لحساب ودمج وترحيل ومطابقة الفواتير الكلية وتوزيعها، هي ملكية فكرية مطلقة وحصرية وحق شخصي أصيل لا يمكن التنازل عنه لمطور النظام المعتمد <strong>Mohamed Nazih</strong>. جميع حقوق الملكية الفكرية محفوظة لمطور النظام Mohamed Nazih ورقم هاتف المطور هو 01029190615. يمنع منعاً باتاً وتحت طائلة المسؤولية القانونية والقضائية الكاملة استنساخ الكود المصدري للنظام، أو إعادة توزيعه، أو تعديله، أو نقله، أو بيعه، أو ترخيصه لأي جهة أخرى دون الحصول على تفويض خطي مسبق وموثق رسمياً وموقع شخصياً ومختوم من المطور محمد نزيه.
                 </p>
               </div>
 
               {/* Section 4 */}
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ fontWeight: '800', color: '#1e293b', fontSize: '15px', margin: '0 0 8px 0', borderRight: '4px solid #3b82f6', paddingRight: '8px' }}>
-                  رابعاً: شروط الاستخدام والنسخ الاحتياطي للأرشيف
+              <div style={{ marginBottom: '24px', backgroundColor: '#fafafa', padding: '16px', borderRadius: '12px', border: '1px solid #f0f0f0' }}>
+                <h4 style={{ fontWeight: '800', color: '#1e293b', fontSize: '14.5px', margin: '0 0 10px 0', borderRight: '4px solid #3b82f6', paddingRight: '8px' }}>
+                  رابعاً: شروط الاستخدام الآمن والنسخ الاحتياطي لقواعد البيانات
                 </h4>
-                <p style={{ margin: 0, textAlign: 'justify' }}>
-                  يوفر النظام للمسؤولين إمكانية تصدير واسترجاع قواعد البيانات والملفات المؤرشفة بصيغة مشفرة متطابقة. تقع مسؤولية الحفاظ على هذه النسخ الاحتياطية وإدارتها بشكل دوري على عاتق إدارة النظام. ولا يتحمل المطور أي مسؤولية تجاه الإتلاف العمدي للبيانات أو سوء الاستخدام من قبل المستخدمين غير المؤهلين.
+                <p style={{ margin: 0, textAlign: 'justify', fontSize: '13px', color: '#475569' }}>
+                  يلتزم مستخدمو النظام من موظفي ومسؤولي شركة الروضة الشريفة باتباع إرشادات الاستخدام الصحيحة والآمنة. يتيح النظام خيارات متطورة لتصدير واستعادة النسخ الاحتياطية لقواعد البيانات والأرشيف التجاري بصيغ محمية، وتقع مسؤولية تفعيل وحفظ هذه الملفات والنسخ الدورية على عاتق إدارة الشركة. ولا يتحمل المطور أي مسؤولية عن فقدان البيانات الناتج عن سوء إدارة كلمات المرور أو العبث اليدوي بالخوادم أو الإتلاف العمدي من قبل جهات غير مخولة.
                 </p>
               </div>
 
               {/* Section 5 */}
-              <div style={{ margin: 0 }}>
-                <h4 style={{ fontWeight: '800', color: '#1e293b', fontSize: '15px', margin: '0 0 8px 0', borderRight: '4px solid #3b82f6', paddingRight: '8px' }}>
-                  خامساً: الامتثال والتحديثات الدورية
+              <div style={{ marginBottom: '8px', backgroundColor: '#fafafa', padding: '16px', borderRadius: '12px', border: '1px solid #f0f0f0' }}>
+                <h4 style={{ fontWeight: '800', color: '#1e293b', fontSize: '14.5px', margin: '0 0 10px 0', borderRight: '4px solid #3b82f6', paddingRight: '8px' }}>
+                  خامساً: الامتثال القانوني والتحديثات البرمجية المستمرة
                 </h4>
-                <p style={{ margin: 0, textAlign: 'justify' }}>
-                  تخضع هذه السياسة للتحديث والتحسين المستمر تماشياً مع المتطلبات التقنية الجديدة لشركة الروضة الشريفة. باستخدامكم لهذا النظام، فإنكم تقرون بالالتزام الكامل بجميع البنود الواردة في هذه الوثيقة وتوافقون على احترام حقوق الملكية الفكرية المكفولة قانونياً للمطور.
+                <p style={{ margin: 0, textAlign: 'justify', fontSize: '13px', color: '#475569' }}>
+                  تخضع هذه الاتفاقية وسياسة الخصوصية للتحديث والتحسين الدوري والمستمر من قبل المطور لضمان مواكبة أعلى معايير الجودة التقنية تلبيةً لتوسعات شركة الروضة الشريفة وفروعها. باستخدامكم لهذا النظام وتسجيل الدخول إليه، فإنكم تقرون بشكل صريح بموافقتكم وعلمكم التام وغير القابل للنقض بكافة البنود المذكورة أعلاه، والتزامكم باحترام حقوق الملكية الفكرية للمطور Mohamed Nazih وحمايتها من أي استغلال غير مصرح به.
                 </p>
               </div>
             </div>
