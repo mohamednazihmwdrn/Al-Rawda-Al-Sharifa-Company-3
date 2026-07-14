@@ -206,14 +206,19 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
 
     return (
       <div id={activeTab} className="panel active" dir="rtl">
-        <h2>↩️ إعداد فاتورة مرتجعات - {branchName}</h2>
-        <div className="form-row">
-          <div className="form-group">
-            <label>اسم صنف المرتجع</label>
+        <h2>↩️ إعداد فاتورة مرتجعات (الفاتورة المفتوحة حالياً) - {branchName}</h2>
+        <p style={{ color: '#4b5563', fontSize: '14.5px', marginBottom: '20px' }}>
+          💡 يمكنك كتابة اسم الصنف وتحديد الكمية المرتجعة ثم إضافتهما إلى <strong>الفاتورة المفتوحة</strong>. أضف كافة الأصناف المرتجعة دفعة واحدة، ثم اضغط على زر الإرسال بالأسفل لتصدير الفاتورة بالكامل إلى المخازن.
+        </p>
+
+        <div className="form-row" style={{ background: '#fef3c7', padding: '15px', borderRadius: '8px', border: '1px solid #fde68a', marginBottom: '25px' }}>
+          <div className="form-group" style={{ flex: 2 }}>
+            <label style={{ fontWeight: 'bold', color: '#92400e' }}>✍️ اسم صنف المرتجع</label>
             <input
               type="text"
               list="items-autocomplete-list"
               id={itemInputKey}
+              placeholder="اكتب اسم الصنف أو اختر من القائمة"
               value={itemVal}
               onChange={(e) =>
                 setBranchReturnItemInputs((prev) => ({
@@ -222,10 +227,11 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
                 }))
               }
               onKeyDown={handleItemKeyDown}
+              style={{ border: '1px solid #f59e0b', borderRadius: '6px', padding: '10px' }}
             />
           </div>
-          <div className="form-group">
-            <label>الكمية المرتجعة</label>
+          <div className="form-group" style={{ flex: 1 }}>
+            <label style={{ fontWeight: 'bold', color: '#92400e' }}>🔢 الكمية المرتجعة</label>
             <input
               type="number"
               min="1"
@@ -239,30 +245,39 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
                 }))
               }
               onKeyDown={handleQtyKeyDown}
+              style={{ border: '1px solid #f59e0b', borderRadius: '6px', padding: '10px' }}
             />
           </div>
           <button
             className="btn btn-warning"
             onClick={() => onAddToReturnsDraft(branchName, itemInputKey, qtyInputKey)}
+            style={{ alignSelf: 'flex-end', height: '44px', fontWeight: 'bold', padding: '0 25px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            ➕ إضافة للمسودة
+            ➕ إضافة للفاتورة المفتوحة
           </button>
         </div>
-        <h3>📝 مسودة المرتجعات الحالية</h3>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h3 style={{ margin: 0, color: '#1e293b' }}>📝 الفاتورة المفتوحة حالياً (قيد المراجعة والإضافة)</h3>
+          <span className="badge badge-warning" style={{ fontSize: '13px', padding: '6px 12px', background: '#f59e0b', color: '#fff' }}>
+            {items.length} أصناف مضافة
+          </span>
+        </div>
+
         <table id={`table-${userKey}-returns-draft`}>
           <thead>
             <tr>
               <th>الصنف</th>
-              <th>الكمية المرتجعة</th>
-              <th>الحالة</th>
-              <th>إجراء</th>
+              <th style={{ textAlign: 'center' }}>الكمية المرتجعة</th>
+              <th style={{ textAlign: 'center' }}>الحالة</th>
+              <th style={{ textAlign: 'center' }}>إجراء</th>
             </tr>
           </thead>
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={4} style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
-                  مسودة المرتجعات فارغة حالياً.
+                <td colSpan={4} style={{ textAlign: 'center', color: '#6b7280', padding: '30px', background: '#f9fafb' }}>
+                  ⚠️ الفاتورة المفتوحة فارغة حالياً. يرجى كتابة اسم الصنف والكمية بالأعلى وإضافتهما لتبدأ في إعداد الفاتورة.
                 </td>
               </tr>
             ) : (
@@ -271,20 +286,21 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
                   <td>
                     <strong>{r.item}</strong>
                   </td>
-                  <td>
-                    <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--warning)' }}>
+                  <td style={{ textAlign: 'center' }}>
+                    <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#b45309', background: '#fef3c7', padding: '4px 12px', borderRadius: '4px' }}>
                       {r.qty}
                     </span>
                   </td>
-                  <td>
-                    <span className="badge badge-pending">بانتظار الإرسال</span>
+                  <td style={{ textAlign: 'center' }}>
+                    <span className="badge badge-pending" style={{ background: '#f59e0b', color: '#fff' }}>بانتظار الإرسال النهائي</span>
                   </td>
-                  <td>
+                  <td style={{ textAlign: 'center' }}>
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() => onRemoveFromReturnsDraft(r.returnDraftId)}
+                      style={{ padding: '4px 10px', fontSize: '12px' }}
                     >
-                      🗑 حذف
+                      🗑 حذف البند
                     </button>
                   </td>
                 </tr>
@@ -292,9 +308,18 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
             )}
           </tbody>
         </table>
-        <button className="btn btn-warning" onClick={() => onSubmitReturns(branchName)}>
-          🚀 إرسال المرتجعات لجميع المخازن
-        </button>
+
+        {items.length > 0 && (
+          <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-start' }}>
+            <button 
+              className="btn btn-warning" 
+              onClick={() => onSubmitReturns(branchName)}
+              style={{ fontWeight: 'bold', fontSize: '15px', padding: '12px 30px', background: '#d97706', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(217, 119, 6, 0.2)' }}
+            >
+              🚀 إرسال الفاتورة المفتوحة بالكامل إلى المخازن
+            </button>
+          </div>
+        )}
 
         <hr style={{ margin: '35px 0 25px 0', borderColor: '#e2e8f0', borderWidth: '1px', borderStyle: 'solid' }} />
 
