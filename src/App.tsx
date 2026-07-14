@@ -572,62 +572,71 @@ export default function App() {
                 border-collapse: collapse !important;
                 margin-top: 5px !important;
                 direction: rtl;
-                border: 1px solid #000000 !important;
-                background-color: #ffffff !important;
+                border: 0.5px solid #000000 !important;
+                background-color: transparent !important;
+                background: none !important;
+                box-shadow: none !important;
                 page-break-inside: auto !important;
                 break-inside: auto !important;
               }
               thead {
                 display: table-header-group !important;
+                background-color: transparent !important;
+                background: none !important;
               }
               tr {
+                height: 25px !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
-                background: #ffffff !important;
-                background-color: #ffffff !important;
+                background-color: transparent !important;
+                background: none !important;
+                box-shadow: none !important;
               }
               th, td {
-                border: 1px solid #000000 !important;
-                padding: 4px 6px !important;
-                font-size: 9.5pt !important;
-                line-height: 1.15 !important;
+                border: 0.5px solid #000000 !important;
+                padding: 8px 12px !important;
+                font-family: Arial, Helvetica, sans-serif !important;
+                font-size: 12px !important;
+                line-height: 1.5 !important;
                 text-align: center !important;
                 vertical-align: middle !important;
                 word-wrap: break-word !important;
                 white-space: normal !important;
-                background: #ffffff !important;
-                background-color: #ffffff !important;
+                background-color: transparent !important;
+                background: none !important;
                 color: #000000 !important;
+                box-shadow: none !important;
               }
               th {
+                font-size: 14px !important;
                 font-weight: bold !important;
-                font-size: 10pt !important;
-                background: #ffffff !important;
-                background-color: #ffffff !important;
+                background-color: transparent !important;
+                background: none !important;
               }
               td strong {
                 font-weight: bold !important;
-                font-size: 10pt !important;
+                font-size: 12px !important;
+                color: #000000 !important;
               }
 
               /* Compact styling to comfortably fit up to 50 rows on a single page */
               .compact-table th, 
               .compact-table td {
-                padding: 1.2px 2.5px !important;
-                font-size: 7.2pt !important;
-                line-height: 1.02 !important;
-                background: #ffffff !important;
-                background-color: #ffffff !important;
+                padding: 4px 6px !important;
+                font-size: 10px !important;
+                line-height: 1.2 !important;
+                background-color: transparent !important;
+                background: none !important;
               }
               .compact-table th {
-                font-size: 7.8pt !important;
+                font-size: 11px !important;
               }
               .compact-table td strong {
-                font-size: 7.2pt !important;
+                font-size: 10px !important;
               }
               .compact-table .badge {
                 padding: 0px 2px !important;
-                font-size: 6.5pt !important;
+                font-size: 9px !important;
               }
               .compact-table + .summary-box-print {
                 margin-top: 6px !important;
@@ -636,7 +645,7 @@ export default function App() {
               }
               .compact-table + .summary-box-print div {
                 padding: 3px !important;
-                font-size: 7.8pt !important;
+                font-size: 10px !important;
               }
 
               /* Column widths to fit >50 items comfortably */
