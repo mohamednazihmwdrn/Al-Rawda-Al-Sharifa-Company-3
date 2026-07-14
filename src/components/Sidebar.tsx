@@ -105,6 +105,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               🔍 كشف حركات الأصناف
             </li>
             <li
+              className={`menu-item ${activeTab === 'admin-monitor' ? 'active' : ''}`}
+              onClick={() => handleItemClick('admin-monitor')}
+            >
+              📊 رقابة المعارض والمخازن
+            </li>
+            <li
               className={`menu-item ${activeTab === 'admin-backup' ? 'active' : ''}`}
               onClick={() => handleItemClick('admin-backup')}
             >

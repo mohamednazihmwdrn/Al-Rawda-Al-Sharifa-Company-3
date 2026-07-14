@@ -1682,6 +1682,8 @@ export default function App() {
           onClearSystemData={handleClearSystemData}
           mergedInvoices={mergedInvoices}
           onViewInvoice={handleViewInvoice}
+          receivedInvoices={receivedInvoices}
+          returnsOrders={returnsOrders}
         />
 
         {/* Branch requests screens */}
