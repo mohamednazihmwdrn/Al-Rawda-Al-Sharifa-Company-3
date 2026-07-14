@@ -981,12 +981,12 @@ export default function App() {
   };
 
   // --- Warehouse deficit approvals & closings ---
-  const handleDispatchItem = (orderId: number, warehouseName: string) => {
+  const handleDispatchItem = (orderId: number, warehouseName: string, overrideQty?: number) => {
     const order = orders.find((o) => o.id === orderId);
     if (!order) return;
 
     const inputVal = whQtyInputs[orderId.toString()];
-    const qty = inputVal !== undefined ? parseInt(inputVal) : order.qty;
+    const qty = overrideQty !== undefined ? overrideQty : (inputVal !== undefined ? parseInt(inputVal) : order.qty);
 
     if (isNaN(qty) || qty < 0) {
       showToast('الكمية المسجلة للصرف غير منطقية', 'error');

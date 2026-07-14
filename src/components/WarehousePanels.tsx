@@ -19,7 +19,7 @@ interface WarehousePanelsProps {
   mergedInvoices: MergedInvoice[];
   receivedInvoices: ReceivedInvoice[];
   closedInvoices: MergedInvoice[];
-  onDispatchItem: (orderId: number, warehouseName: string) => void;
+  onDispatchItem: (orderId: number, warehouseName: string, overrideQty?: number) => void;
   onReopenDispatchItem: (orderId: number) => void;
   onCloseWarehouseInvoice: (warehouseName: string) => void;
   onReceiveReturnItem: (returnId: number, warehouseName: string) => void;
@@ -278,9 +278,7 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
                               style={{ background: '#ef4444', color: 'white', padding: '6px 12px', fontWeight: '600' }}
                               onClick={() => {
                                 setWhQtyInputs((prev) => ({ ...prev, [inputId]: '0' }));
-                                setTimeout(() => {
-                                  onDispatchItem(o.id, warehouseName);
-                                }, 100);
+                                onDispatchItem(o.id, warehouseName, 0);
                               }}
                               title="تعليم الصنف كغير متوفر في المخزن"
                             >

@@ -37,12 +37,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       if (
         tabId === `${k}-branch` ||
         tabId === `${k}-returns` ||
+        tabId === `${k}-archive-sent` ||
         tabId === `${k}-archive-rec` ||
         tabId === `${k}-archive-returns` ||
-        tabId === `${k}-detailed-received` ||
-        tabId === 'nadi-wh' ||
-        tabId === 'nahas-wh' ||
-        tabId === 'merged-returns-wh'
+        tabId === `${k}-detailed-received`
       ) {
         return true;
       }
@@ -54,6 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       if (
         tabId === `${k}-wh` ||
         tabId === 'merged-returns-wh' ||
+        tabId === `${k}-archive-rec` ||
         tabId === `${k}-archive-disp` ||
         tabId === `${k}-archive-returns` ||
         tabId === 'merged-archive'
@@ -121,163 +120,185 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       {/* Deficits Sections for branches */}
-      <div className="menu-group-title">🛒 النواقص بالمعارض</div>
-      <ul className="sidebar-menu">
-        {branchKeys.map((k) => {
-          const tabId = `${k}-branch`;
-          if (!showMenuItem(tabId)) return null;
-          const count = draftOrders.filter((d) => d.branch === users[k].name).length;
-          return (
-            <li
-              key={tabId}
-              className={`menu-item ${activeTab === tabId ? 'active' : ''}`}
-              onClick={() => handleItemClick(tabId)}
-            >
-              طلب نواقص {users[k].name.replace('معرض ', '')}
-              {count > 0 && <span className="badge-count">{count}</span>}
-            </li>
-          );
-        })}
-      </ul>
+      {branchKeys.some((k) => showMenuItem(`${k}-branch`)) && (
+        <>
+          <div className="menu-group-title">🛒 النواقص بالمعارض</div>
+          <ul className="sidebar-menu">
+            {branchKeys.map((k) => {
+              const tabId = `${k}-branch`;
+              if (!showMenuItem(tabId)) return null;
+              const count = draftOrders.filter((d) => d.branch === users[k].name).length;
+              return (
+                <li
+                  key={tabId}
+                  className={`menu-item ${activeTab === tabId ? 'active' : ''}`}
+                  onClick={() => handleItemClick(tabId)}
+                >
+                  طلب نواقص {users[k].name.replace('معرض ', '')}
+                  {count > 0 && <span className="badge-count">{count}</span>}
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
 
       {/* Returns Sections for branches */}
-      <div className="menu-group-title">↩️ مرتجعات المعارض</div>
-      <ul className="sidebar-menu">
-        {branchKeys.map((k) => {
-          const tabId = `${k}-returns`;
-          if (!showMenuItem(tabId)) return null;
-          const count = returnsDraft.filter((r) => r.branch === users[k].name).length;
-          return (
-            <li
-              key={tabId}
-              className={`menu-item ${activeTab === tabId ? 'active' : ''}`}
-              onClick={() => handleItemClick(tabId)}
-            >
-              مرتجع {users[k].name.replace('معرض ', '')}
-              {count > 0 && (
-                <span className="badge-count" style={{ background: 'var(--warning)' }}>
-                   {count}
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      {branchKeys.some((k) => showMenuItem(`${k}-returns`)) && (
+        <>
+          <div className="menu-group-title">↩️ مرتجعات المعارض</div>
+          <ul className="sidebar-menu">
+            {branchKeys.map((k) => {
+              const tabId = `${k}-returns`;
+              if (!showMenuItem(tabId)) return null;
+              const count = returnsDraft.filter((r) => r.branch === users[k].name).length;
+              return (
+                <li
+                  key={tabId}
+                  className={`menu-item ${activeTab === tabId ? 'active' : ''}`}
+                  onClick={() => handleItemClick(tabId)}
+                >
+                  مرتجع {users[k].name.replace('معرض ', '')}
+                  {count > 0 && (
+                    <span className="badge-count" style={{ background: 'var(--warning)' }}>
+                       {count}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
 
       {/* Detailed Received Items Reports for branches */}
-      <div className="menu-group-title">📋 تقارير الوارد التفصيلية</div>
-      <ul className="sidebar-menu">
-        {branchKeys.map((k) => {
-          const tabId = `${k}-detailed-received`;
-          if (!showMenuItem(tabId)) return null;
-          return (
-            <li
-              key={tabId}
-              className={`menu-item ${activeTab === tabId ? 'active' : ''}`}
-              onClick={() => handleItemClick(tabId)}
-            >
-              📋 وارد {users[k].name.replace('معرض ', '')} التفصيلي
-            </li>
-          );
-        })}
-      </ul>
+      {branchKeys.some((k) => showMenuItem(`${k}-detailed-received`)) && (
+        <>
+          <div className="menu-group-title">📋 تقارير الوارد التفصيلية</div>
+          <ul className="sidebar-menu">
+            {branchKeys.map((k) => {
+              const tabId = `${k}-detailed-received`;
+              if (!showMenuItem(tabId)) return null;
+              return (
+                <li
+                  key={tabId}
+                  className={`menu-item ${activeTab === tabId ? 'active' : ''}`}
+                  onClick={() => handleItemClick(tabId)}
+                >
+                  📋 وارد {users[k].name.replace('معرض ', '')} التفصيلي
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
 
       {/* Warehouse Panels */}
-      <div className="menu-group-title">📦 لوحة المخازن</div>
-      <ul className="sidebar-menu">
-        {whKeys.map((k) => {
-          const tabId = `${k}-wh`;
-          if (!showMenuItem(tabId)) return null;
-          return (
-            <li
-              key={tabId}
-              className={`menu-item ${activeTab === tabId ? 'active' : ''}`}
-              onClick={() => handleItemClick(tabId)}
-            >
-              نواقص {users[k].name.replace('مخزن ', '')}
-            </li>
-          );
-        })}
-        {showMenuItem('merged-returns-wh') && (
-          <li
-            className={`menu-item ${activeTab === 'merged-returns-wh' ? 'active' : ''}`}
-            onClick={() => handleItemClick('merged-returns-wh')}
-          >
-            📋 قائمة المرتجعات المدمجة
-          </li>
-        )}
-      </ul>
+      {(whKeys.some((k) => showMenuItem(`${k}-wh`)) || showMenuItem('merged-returns-wh')) && (
+        <>
+          <div className="menu-group-title">📦 لوحة المخازن</div>
+          <ul className="sidebar-menu">
+            {whKeys.map((k) => {
+              const tabId = `${k}-wh`;
+              if (!showMenuItem(tabId)) return null;
+              return (
+                <li
+                  key={tabId}
+                  className={`menu-item ${activeTab === tabId ? 'active' : ''}`}
+                  onClick={() => handleItemClick(tabId)}
+                >
+                  نواقص {users[k].name.replace('مخزن ', '')}
+                </li>
+              );
+            })}
+            {showMenuItem('merged-returns-wh') && (
+              <li
+                className={`menu-item ${activeTab === 'merged-returns-wh' ? 'active' : ''}`}
+                onClick={() => handleItemClick('merged-returns-wh')}
+              >
+                📋 قائمة المرتجعات المدمجة
+              </li>
+            )}
+          </ul>
+        </>
+      )}
 
       {/* Archives Panels */}
-      <div className="menu-group-title">🗄️ الأرشفة والسجلات</div>
-      <ul className="sidebar-menu">
-        {branchKeys.map((k) => (
-          <React.Fragment key={k}>
-            {showMenuItem(`${k}-archive-sent`) && (
-              <li
-                className={`menu-item ${activeTab === `${k}-archive-sent` ? 'active' : ''}`}
-                onClick={() => handleItemClick(`${k}-archive-sent`)}
-              >
-                📤 مرسل {users[k].name.replace('معرض ', '')}
-              </li>
-            )}
-            {showMenuItem(`${k}-archive-rec`) && (
-              <li
-                className={`menu-item ${activeTab === `${k}-archive-rec` ? 'active' : ''}`}
-                onClick={() => handleItemClick(`${k}-archive-rec`)}
-              >
-                📥 مستلم {users[k].name.replace('معرض ', '')}
-              </li>
-            )}
-            {showMenuItem(`${k}-archive-returns`) && (
-              <li
-                className={`menu-item ${activeTab === `${k}-archive-returns` ? 'active' : ''}`}
-                onClick={() => handleItemClick(`${k}-archive-returns`)}
-              >
-                ⏪ مرتجعات {users[k].name.replace('معرض ', '')}
-              </li>
-            )}
-          </React.Fragment>
-        ))}
+      {(branchKeys.some((k) => showMenuItem(`${k}-archive-sent`) || showMenuItem(`${k}-archive-rec`) || showMenuItem(`${k}-archive-returns`)) ||
+        whKeys.some((k) => showMenuItem(`${k}-archive-rec`) || showMenuItem(`${k}-archive-disp`) || showMenuItem(`${k}-archive-returns`)) ||
+        showMenuItem('merged-archive')) && (
+        <>
+          <div className="menu-group-title">🗄️ الأرشفة والسجلات</div>
+          <ul className="sidebar-menu">
+            {branchKeys.map((k) => (
+              <React.Fragment key={k}>
+                {showMenuItem(`${k}-archive-sent`) && (
+                  <li
+                    className={`menu-item ${activeTab === `${k}-archive-sent` ? 'active' : ''}`}
+                    onClick={() => handleItemClick(`${k}-archive-sent`)}
+                  >
+                    📤 مرسل {users[k].name.replace('معرض ', '')}
+                  </li>
+                )}
+                {showMenuItem(`${k}-archive-rec`) && (
+                  <li
+                    className={`menu-item ${activeTab === `${k}-archive-rec` ? 'active' : ''}`}
+                    onClick={() => handleItemClick(`${k}-archive-rec`)}
+                  >
+                    📥 مستلم {users[k].name.replace('معرض ', '')}
+                  </li>
+                )}
+                {showMenuItem(`${k}-archive-returns`) && (
+                  <li
+                    className={`menu-item ${activeTab === `${k}-archive-returns` ? 'active' : ''}`}
+                    onClick={() => handleItemClick(`${k}-archive-returns`)}
+                  >
+                    ⏪ مرتجعات {users[k].name.replace('معرض ', '')}
+                  </li>
+                )}
+              </React.Fragment>
+            ))}
 
-        {whKeys.map((k) => (
-          <React.Fragment key={k}>
-            {showMenuItem(`${k}-archive-rec`) && (
-              <li
-                className={`menu-item ${activeTab === `${k}-archive-rec` ? 'active' : ''}`}
-                onClick={() => handleItemClick(`${k}-archive-rec`)}
-              >
-                📋 طلبات {users[k].name.replace('مخزن ', '')}
-              </li>
-            )}
-            {showMenuItem(`${k}-archive-disp`) && (
-              <li
-                className={`menu-item ${activeTab === `${k}-archive-disp` ? 'active' : ''}`}
-                onClick={() => handleItemClick(`${k}-archive-disp`)}
-              >
-                📦 منصرف {users[k].name.replace('مخزن ', '')}
-              </li>
-            )}
-            {showMenuItem(`${k}-archive-returns`) && (
-              <li
-                className={`menu-item ${activeTab === `${k}-archive-returns` ? 'active' : ''}`}
-                onClick={() => handleItemClick(`${k}-archive-returns`)}
-              >
-                📥 مرتجع {users[k].name.replace('مخزن ', '')}
-              </li>
-            )}
-          </React.Fragment>
-        ))}
+            {whKeys.map((k) => (
+              <React.Fragment key={k}>
+                {showMenuItem(`${k}-archive-rec`) && (
+                  <li
+                    className={`menu-item ${activeTab === `${k}-archive-rec` ? 'active' : ''}`}
+                    onClick={() => handleItemClick(`${k}-archive-rec`)}
+                  >
+                    📋 طلبات {users[k].name.replace('مخزن ', '')}
+                  </li>
+                )}
+                {showMenuItem(`${k}-archive-disp`) && (
+                  <li
+                    className={`menu-item ${activeTab === `${k}-archive-disp` ? 'active' : ''}`}
+                    onClick={() => handleItemClick(`${k}-archive-disp`)}
+                  >
+                    📦 منصرف {users[k].name.replace('مخزن ', '')}
+                  </li>
+                )}
+                {showMenuItem(`${k}-archive-returns`) && (
+                  <li
+                    className={`menu-item ${activeTab === `${k}-archive-returns` ? 'active' : ''}`}
+                    onClick={() => handleItemClick(`${k}-archive-returns`)}
+                  >
+                    📥 مرتجع {users[k].name.replace('مخزن ', '')}
+                  </li>
+                )}
+              </React.Fragment>
+            ))}
 
-        {showMenuItem('merged-archive') && (
-          <li
-            className={`menu-item ${activeTab === 'merged-archive' ? 'active' : ''}`}
-            onClick={() => handleItemClick('merged-archive')}
-          >
-            📊 مرسلة مدمجة اليوم
-          </li>
-        )}
-      </ul>
+            {showMenuItem('merged-archive') && (
+              <li
+                className={`menu-item ${activeTab === 'merged-archive' ? 'active' : ''}`}
+                onClick={() => handleItemClick('merged-archive')}
+              >
+                📊 مرسلة مدمجة اليوم
+              </li>
+            )}
+          </ul>
+        </>
+      )}
 
       <div className="sidebar-footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <button
