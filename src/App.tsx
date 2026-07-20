@@ -771,7 +771,7 @@ export default function App() {
             <div class="print-footer">
               <div style="font-weight: bold; color: #000000;">🏛️ شركة الروضة الشريفة</div>
               <div class="page-number-box" style="font-weight: bold; color: #000000;"></div>
-              <div style="direction: rtl; font-weight: bold; color: #000000;">حقوق الملكية الفكرية محفوظة لمطور النظام Mohamed Nazih ورقم هاتفي 01029190615 ©</div>
+              <div style="direction: rtl; font-weight: bold; color: #000000;">حقوق الملكية الفكرية محفوظة لمطور النظام Mohamed Nazih 01029190615 ©</div>
             </div>
             <script>
               window.onload = function() {
