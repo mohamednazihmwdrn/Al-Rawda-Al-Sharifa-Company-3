@@ -26,6 +26,7 @@ import { PrintArea } from './components/PrintArea';
 
 export default function App() {
   const isIncomingUpdate = useRef<boolean>(false);
+  const lastIncomingData = useRef<string>('');
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean;
     message: string;
@@ -303,6 +304,22 @@ export default function App() {
       if (snapshot.exists()) {
         const data = snapshot.data();
         isIncomingUpdate.current = true;
+
+        // Save the exact received Firestore state string
+        lastIncomingData.current = JSON.stringify({
+          users: data.users || {},
+          orders: data.orders || [],
+          draftOrders: data.draftOrders || [],
+          returnsDraft: data.returnsDraft || [],
+          returnsOrders: data.returnsOrders || [],
+          mergedInvoices: data.mergedInvoices || [],
+          receivedInvoices: data.receivedInvoices || [],
+          closedInvoices: data.closedInvoices || [],
+          orderIdCounter: data.orderIdCounter !== undefined ? data.orderIdCounter : 1,
+          returnIdCounter: data.returnIdCounter !== undefined ? data.returnIdCounter : 1,
+          savedItemsCatalog: data.savedItemsCatalog || [],
+        });
+
         if (data.users) {
           setUsers(data.users);
           const savedUserKey = localStorage.getItem('currentUser_key');
@@ -332,7 +349,7 @@ export default function App() {
 
         setTimeout(() => {
           isIncomingUpdate.current = false;
-        }, 150);
+        }, 300);
       } else {
         // Initialize Firestore with clean empty states if doc doesn't exist
         const defaultUsers = {
@@ -415,23 +432,49 @@ export default function App() {
     localStorage.setItem('returnIdCounter_v3', returnIdCounter.toString());
     localStorage.setItem('savedItemsCatalog_v3', JSON.stringify(savedItemsCatalog));
 
-    if (!isIncomingUpdate.current) {
-      setDoc(doc(db, 'sync', 'state'), {
-        users,
-        orders,
-        draftOrders,
-        returnsDraft,
-        returnsOrders,
-        mergedInvoices,
-        receivedInvoices,
-        closedInvoices,
-        orderIdCounter,
-        returnIdCounter,
-        savedItemsCatalog,
-      }).catch((err) => {
-        console.error('Firestore save error:', err);
-      });
+    const currentStateStr = JSON.stringify({
+      users: users || {},
+      orders: orders || [],
+      draftOrders: draftOrders || [],
+      returnsDraft: returnsDraft || [],
+      returnsOrders: returnsOrders || [],
+      mergedInvoices: mergedInvoices || [],
+      receivedInvoices: receivedInvoices || [],
+      closedInvoices: closedInvoices || [],
+      orderIdCounter: orderIdCounter !== undefined ? orderIdCounter : 1,
+      returnIdCounter: returnIdCounter !== undefined ? returnIdCounter : 1,
+      savedItemsCatalog: savedItemsCatalog || [],
+    });
+
+    if (isIncomingUpdate.current) {
+      isIncomingUpdate.current = false;
+      return;
     }
+
+    if (currentStateStr === lastIncomingData.current) {
+      // No changes compared to what we received, skip writing back
+      return;
+    }
+
+    // This is a local update, write to Firestore
+    setDoc(doc(db, 'sync', 'state'), {
+      users,
+      orders,
+      draftOrders,
+      returnsDraft,
+      returnsOrders,
+      mergedInvoices,
+      receivedInvoices,
+      closedInvoices,
+      orderIdCounter,
+      returnIdCounter,
+      savedItemsCatalog,
+    }).then(() => {
+      // Track that this is the latest state we saved
+      lastIncomingData.current = currentStateStr;
+    }).catch((err) => {
+      console.error('Firestore save error:', err);
+    });
   }, [
     users,
     orders,
@@ -510,6 +553,7 @@ export default function App() {
                 transition: none !important;
                 animation: none !important;
                 will-change: auto !important;
+                box-sizing: border-box !important;
               }
 
               body {
@@ -521,6 +565,7 @@ export default function App() {
                 color: #000000 !important;
                 -webkit-font-smoothing: antialiased;
                 -moz-osx-font-smoothing: grayscale;
+                counter-reset: page;
               }
 
               .print-container {
@@ -529,37 +574,32 @@ export default function App() {
                 margin: 0 auto !important;
                 padding: 0px !important;
                 box-sizing: border-box !important;
-                page-break-inside: auto !important;
-                break-inside: auto !important;
               }
 
-              /* Header styling */
+              /* Header styling matching the photo */
               .header {
                 text-align: center;
                 border-bottom: 2px solid #000000 !important;
-                padding-bottom: 4px !important;
-                margin-bottom: 8px !important;
+                padding-bottom: 6px !important;
+                margin-bottom: 12px !important;
               }
               .company-name-main {
-                font-size: 14px;
-                font-weight: bold;
-                color: #000000;
-                margin: 0;
-              }
-              .company-sub {
-                display: none !important;
+                font-size: 15px !important;
+                font-weight: bold !important;
+                color: #000000 !important;
+                margin: 0 0 4px 0 !important;
               }
               .header h1 {
-                font-size: 13px;
-                margin: 2px 0;
-                font-weight: bold;
-                color: #000000;
+                font-size: 14px !important;
+                margin: 4px 0 !important;
+                font-weight: bold !important;
+                color: #000000 !important;
               }
               .header h2 {
-                font-size: 9px;
-                font-weight: normal;
-                color: #000000;
-                margin: 0;
+                font-size: 10.5px !important;
+                font-weight: normal !important;
+                color: #000000 !important;
+                margin: 0 !important;
               }
 
               /* High-precision crisp table styling */
@@ -569,80 +609,73 @@ export default function App() {
                 border-collapse: collapse !important;
                 margin-top: 5px !important;
                 direction: rtl;
-                border: 0.5px solid #000000 !important;
-                background-color: transparent !important;
-                background: none !important;
-                box-shadow: none !important;
-                page-break-inside: auto !important;
-                break-inside: auto !important;
+                border: 1px solid #000000 !important;
+                background-color: #ffffff !important;
               }
               thead {
                 display: table-header-group !important;
-                background-color: transparent !important;
-                background: none !important;
               }
               tr {
-                height: 25px !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
-                background-color: transparent !important;
-                background: none !important;
-                box-shadow: none !important;
               }
               th, td {
-                border: 0.5px solid #000000 !important;
-                padding: 6px 8px !important;
+                border: 1px solid #000000 !important;
+                padding: 5px 6px !important; /* balanced default padding */
                 font-family: Arial, Helvetica, sans-serif !important;
-                font-size: 11.5px !important;
-                line-height: 1.35 !important;
+                font-size: 11px !important; /* highly legible default font size */
+                line-height: 1.3 !important;
                 text-align: center !important;
                 vertical-align: middle !important;
                 word-wrap: break-word !important;
                 white-space: normal !important;
-                background-color: transparent !important;
-                background: none !important;
                 color: #000000 !important;
-                box-shadow: none !important;
               }
               th {
-                font-size: 12.5px !important;
+                font-size: 11.5px !important;
                 font-weight: bold !important;
-                background-color: transparent !important;
-                background: none !important;
+                background-color: #f2f2f2 !important;
               }
               td strong {
                 font-weight: bold !important;
-                font-size: 11.5px !important;
+                font-size: 11px !important;
                 color: #000000 !important;
               }
 
-              /* Compact styling to comfortably fit up to 30 items on A5 and 50 on A4 */
+              /* Compact styling to comfortably fit up to 30 items on A5 */
               .compact-table th, 
               .compact-table td {
-                padding: 3px 5px !important;
-                font-size: 10px !important;
-                line-height: 1.15 !important;
-                background-color: transparent !important;
-                background: none !important;
+                padding: 2.2px 4px !important;
+                font-size: 9.5px !important;
+                line-height: 1.12 !important;
               }
               .compact-table th {
-                font-size: 10.5px !important;
+                font-size: 10px !important;
               }
               .compact-table td strong {
-                font-size: 10px !important;
+                font-size: 9.5px !important;
               }
               .compact-table .badge {
                 padding: 0px 2px !important;
+                font-size: 7.5px !important;
+              }
+
+              /* Ultra-compact styling to comfortably fit 50+ items on A4 */
+              .ultra-compact-table th, 
+              .ultra-compact-table td {
+                padding: 1.5px 3px !important;
+                font-size: 8.5px !important;
+                line-height: 1.05 !important;
+              }
+              .ultra-compact-table th {
                 font-size: 9px !important;
               }
-              .compact-table + .summary-box-print {
-                margin-top: 6px !important;
-                padding: 4px !important;
-                gap: 4px !important;
+              .ultra-compact-table td strong {
+                font-size: 8.5px !important;
               }
-              .compact-table + .summary-box-print div {
-                padding: 3px !important;
-                font-size: 10px !important;
+              .ultra-compact-table .badge {
+                padding: 0px 1px !important;
+                font-size: 6.5px !important;
               }
 
               /* Specific column settings for main invoice table to prevent squeezing of names */
@@ -652,272 +685,77 @@ export default function App() {
                 text-align: center !important;
               }
               #printable-table th:nth-child(2), #printable-table td:nth-child(2) {
-                width: 54% !important; /* increased to give maximum room for item names */
+                width: 32% !important; /* beautifully adjusted to 32% so the text fills the cell nicely without excessive wide blank space */
                 text-align: right !important;
                 white-space: normal !important;
                 word-break: break-word !important;
+                padding-right: 8px !important;
               }
               #printable-table th:nth-child(3), #printable-table td:nth-child(3) {
-                width: 8% !important;
+                width: 12% !important;
                 text-align: center !important;
                 white-space: normal !important;
               }
               #printable-table th:nth-child(4), #printable-table td:nth-child(4) {
-                width: 8% !important;
+                width: 13% !important;
                 text-align: center !important;
                 white-space: normal !important;
               }
               #printable-table th:nth-child(5), #printable-table td:nth-child(5) {
-                width: 8% !important;
+                width: 13% !important;
                 text-align: center !important;
                 white-space: normal !important;
               }
               #printable-table th:nth-child(6), #printable-table td:nth-child(6) {
-                width: 8% !important;
+                width: 12% !important;
                 text-align: center !important;
                 white-space: normal !important;
               }
               #printable-table th:nth-child(7), #printable-table td:nth-child(7) {
-                width: 10% !important;
+                width: 14% !important;
                 text-align: center !important;
                 white-space: normal !important;
               }
 
-              /* Badge styling */
+              /* Badge styling - simple, elegant borders, no color fills for print accuracy */
               .badge, .badge-success, .badge-pending, .badge-danger {
                 display: inline-block !important;
                 padding: 1.5px 3px !important;
-                border-radius: 1px !important;
-                font-size: 8.5pt !important;
-                border: none !important;
+                border-radius: 2px !important;
+                font-size: 8pt !important;
+                border: 1px solid #000000 !important;
                 background: #ffffff !important;
-                background-color: #ffffff !important;
                 color: #000000 !important;
                 white-space: nowrap !important;
+                font-weight: bold !important;
               }
 
-              /* Screen only footer style - make it visible on screen too */
               .print-footer {
                 display: flex !important;
+                position: fixed !important;
+                bottom: 0px !important;
+                left: 0 !important;
+                right: 0 !important;
                 justify-content: space-between !important;
                 align-items: center !important;
-                border-top: 1.5px solid #000000 !important;
-                padding-top: 6px !important;
-                margin-top: 25px !important;
-                font-size: 9.5pt !important;
+                border-top: 1px solid #000000 !important;
+                padding-top: 3px !important;
+                font-size: 8px !important;
                 font-weight: bold !important;
+                background: #ffffff !important;
                 color: #000000 !important;
               }
 
-              /* Print-specific optimizations (Strict Black and White & Ultra Compact 50 Rows Single Page) */
-              @media print {
-                /* Strip all backgrounds and force clean white with sharp black ink */
-                * {
-                  background: #ffffff !important;
-                  background-color: #ffffff !important;
-                  color: #000000 !important;
-                  box-shadow: none !important;
-                  text-shadow: none !important;
-                  -webkit-print-color-adjust: economy !important;
-                  print-color-adjust: economy !important;
-                }
+              .page-number-box::after {
+                counter-increment: page;
+                content: "صفحة " counter(page);
+                font-weight: bold !important;
+                font-size: 8px !important;
+                color: #000000 !important;
+              }
 
-                body {
-                  padding: 0 !important;
-                  margin: 0 !important;
-                  font-size: 7.5pt !important;
-                  line-height: 1.05 !important;
-                  background: #ffffff !important;
-                  color: #000000 !important;
-                }
-
-                .print-container {
-                  padding: 0 !important;
-                  margin: 0 !important;
-                  width: 100% !important;
-                  max-width: 100% !important;
-                  page-break-inside: auto !important;
-                  break-inside: auto !important;
-                }
-
-                .header {
-                  padding-bottom: 3px !important;
-                  margin-bottom: 6px !important;
-                  border-bottom: 1.5px solid #000000 !important;
-                }
-
-                .company-name-main {
-                  font-size: 13px !important;
-                  font-weight: bold !important;
-                  margin: 0 !important;
-                }
-
-                .company-sub {
-                  display: none !important; /* hide non-essential details to gain vertical space */
-                }
-
-                .header h1 {
-                  font-size: 11px !important;
-                  margin: 1px 0 !important;
-                  font-weight: bold !important;
-                }
-
-                .header h2 {
-                  font-size: 8.5px !important;
-                  margin: 0 !important;
-                }
-
-                /* Fixed table layouts and borders to support 50 rows comfortably on 1 page */
-                table {
-                  width: 100% !important;
-                  table-layout: fixed !important;
-                  border-collapse: collapse !important;
-                  margin-top: 4px !important;
-                  border: 1px solid #000000 !important;
-                  background-color: #ffffff !important;
-                  page-break-inside: auto !important;
-                  break-inside: auto !important;
-                         th, td {
-                  border: 1px solid #000000 !important;
-                  padding: 6px 8px !important; /* comfortable default padding */
-                  font-size: 11.5px !important; /* highly legible default font size */
-                  line-height: 1.35 !important;
-                  text-align: center !important;
-                  vertical-align: middle !important;
-                  word-wrap: break-word !important;
-                  white-space: normal !important;
-                  background: #ffffff !important;
-                  background-color: #ffffff !important;
-                  color: #000000 !important;
-                }
-
-                th {
-                  font-size: 12.5px !important;
-                  font-weight: bold !important;
-                  white-space: normal !important;
-                  background: #ffffff !important;
-                  background-color: #ffffff !important;
-                }
-
-                td strong {
-                  font-weight: bold !important;
-                  font-size: 11.5px !important;
-                  color: #000000 !important;
-                }
-
-                /* Compact table styles specifically when there are many rows */
-                .compact-table th,
-                .compact-table td {
-                  padding: 3px 5px !important;
-                  font-size: 10px !important;
-                  line-height: 1.15 !important;
-                }
-                .compact-table th {
-                  font-size: 10.5px !important;
-                }
-                .compact-table td strong {
-                  font-size: 10px !important;
-                }
-
-                /* Proportional column widths for perfect printing on main invoice table without overlapping */
-                #printable-table th:nth-child(1), #printable-table td:nth-child(1) {
-                  width: 4% !important;
-                  white-space: nowrap !important;
-                  text-align: center !important;
-                }
-                #printable-table th:nth-child(2), #printable-table td:nth-child(2) {
-                  width: 54% !important; /* widened to 54% to prevent wrapping of item names */
-                  text-align: right !important;
-                  white-space: normal !important;
-                  word-break: break-word !important;
-                }
-                #printable-table th:nth-child(3), #printable-table td:nth-child(3) {
-                  width: 8% !important;
-                  text-align: center !important;
-                  white-space: normal !important;
-                }
-                #printable-table th:nth-child(4), #printable-table td:nth-child(4) {
-                  width: 8% !important;
-                  text-align: center !important;
-                  white-space: normal !important;
-                }
-                #printable-table th:nth-child(5), #printable-table td:nth-child(5) {
-                  width: 8% !important;
-                  text-align: center !important;
-                  white-space: normal !important;
-                }
-                #printable-table th:nth-child(6), #printable-table td:nth-child(6) {
-                  width: 8% !important;
-                  text-align: center !important;
-                  white-space: normal !important;
-                }
-                #printable-table th:nth-child(7), #printable-table td:nth-child(7) {
-                  width: 10% !important;
-                  text-align: center !important;
-                  white-space: normal !important;
-                }
-
-                /* Print badges: pure black outlines, no color filling, no shadows */
-                .badge, .badge-success, .badge-pending, .badge-danger {
-                  display: inline-block !important;
-                  padding: 0.5px 2px !important;
-                  border-radius: 1px !important;
-                  font-size: 6.8pt !important;
-                  border: none !important;
-                  background: #ffffff !important;
-                  background-color: #ffffff !important;
-                  color: #000000 !important;
-                  white-space: nowrap !important;
-                }
-
-                .no-print {
-                  display: none !important;
-                }
-
-                /* Total Summary Boxes: Simple Black & White grid with outlines */
-                .summary-box-print {
-                  margin-top: 6px !important;
-                  padding: 4px !important;
-                  background: #ffffff !important;
-                  background-color: #ffffff !important;
-                  border: 1px solid #000000 !important;
-                  display: grid !important;
-                  grid-template-columns: repeat(4, 1fr) !important;
-                  gap: 4px !important;
-                  page-break-inside: avoid !important;
-                  break-inside: avoid !important;
-                }
-
-                .summary-box-print div {
-                  padding: 3px !important;
-                  background: #ffffff !important;
-                  background-color: #ffffff !important;
-                  border: 1px solid #000000 !important;
-                  color: #000000 !important;
-                  font-size: 7.8pt !important;
-                  text-align: center !important;
-                }
-
-                .summary-box-print div span {
-                  color: #000000 !important;
-                  font-size: 8.5pt !important;
-                  font-weight: bold !important;
-                }
-
-                .print-footer {
-                  display: flex !important;
-                  position: fixed !important;
-                  bottom: 0px !important;
-                  left: 0 !important;
-                  right: 0 !important;
-                  justify-content: space-between !important;
-                  align-items: center !important;
-                  border-top: 1px solid #000000 !important;
-                  padding-top: 2px !important;
-                  font-size: 7.5pt !important;
-                  background: #ffffff !important;
-                  color: #000000 !important;
-                }
+              .no-print {
+                display: none !important;
               }
             </style>
           </head>
@@ -932,6 +770,7 @@ export default function App() {
             </div>
             <div class="print-footer">
               <div style="font-weight: bold; color: #000000;">🏛️ شركة الروضة الشريفة</div>
+              <div class="page-number-box" style="font-weight: bold; color: #000000;"></div>
               <div style="direction: rtl; font-weight: bold; color: #000000;">حقوق الملكية الفكرية محفوظة لمطور النظام Mohamed Nazih ورقم هاتفي 01029190615 ©</div>
             </div>
             <script>
@@ -1703,7 +1542,7 @@ export default function App() {
     setInvoiceView(null);
   };
 
-  const handlePrintInvoiceDetails = (isPdf?: boolean) => {
+  const handlePrintInvoiceDetails = (isPdf?: boolean, onlyDeficit?: boolean) => {
     if (!invoiceView) return;
     const view = invoiceView;
 
@@ -1778,60 +1617,69 @@ export default function App() {
       const totalDisp = g.nadiQty + g.nahasQty;
       g.deficitQty = Math.max(0, g.requestedQty - totalDisp);
       if (totalDisp >= g.requestedQty) {
-        g.statusText = 'واصل كامل';
+        g.statusText = 'واصل';
         g.badgeClass = 'badge-success';
       } else if (totalDisp > 0) {
-        g.statusText = 'واصل جزئي';
+        g.statusText = 'جزئي';
         g.badgeClass = 'badge-pending';
       } else {
-        g.statusText = 'لم يصل / قيد الانتظار';
+        g.statusText = 'لا يوجد';
         g.badgeClass = 'badge-danger';
       }
       return g;
     });
 
-    const totalQty = groupedItems.reduce((sum, item) => sum + item.requestedQty, 0);
-    const totalNadi = groupedItems.reduce((sum, item) => sum + item.nadiQty, 0);
-    const totalNahas = groupedItems.reduce((sum, item) => sum + item.nahasQty, 0);
-    const totalDeficit = groupedItems.reduce((sum, item) => sum + item.deficitQty, 0);
+    const filteredItems = onlyDeficit ? groupedItems.filter(item => item.deficitQty > 0) : groupedItems;
 
-    const isCompact = groupedItems.length > 15;
+    const totalQty = filteredItems.reduce((sum, item) => sum + item.requestedQty, 0);
+    const totalNadi = filteredItems.reduce((sum, item) => sum + item.nadiQty, 0);
+    const totalNahas = filteredItems.reduce((sum, item) => sum + item.nahasQty, 0);
+    const totalDeficit = filteredItems.reduce((sum, item) => sum + item.deficitQty, 0);
+
+    let densityClass = '';
+    if (filteredItems.length > 30) {
+      densityClass = 'ultra-compact-table';
+    } else if (filteredItems.length > 15) {
+      densityClass = 'compact-table';
+    }
 
     let htmlTable = `
-      <div style="font-size:12px; margin-bottom:12px; direction:rtl; line-height: 1.5; font-family:'Cairo', 'Inter', sans-serif; display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 8px;">
-          <span>🏢 الجهة الطالبة (المعرض المستلم): <strong style="font-size: 13.5px; color: #1e293b;">${view.destinationBranch}</strong></span>
-          <span>📦 حالة التنسيق: <strong style="color: #16a34a;">تغطية مدمجة (النادي + النحاس)</strong></span>
+      <div style="border: 1px solid #000000; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background-color: #fafafa; font-family: 'Cairo', sans-serif; font-size: 11.5px; font-weight: bold;">
+          <div>
+            <span>🏢 الجهة الطالبة (المعرض المستلم):</span>
+            <span style="color: #000000; margin-right: 4px;">${view.destinationBranch}</span>
+          </div>
+          <div>
+            <span>📦 حالة التنسيق:</span>
+            <span style="color: #000000; margin-right: 4px;">${onlyDeficit ? 'كشف بنود العجز المتبقي' : 'تغطية مدمجة (النادي + النحاس)'}</span>
+          </div>
       </div>
-      <table id="printable-table" class="${isCompact ? 'compact-table' : ''}" style="width:100%; border-collapse:collapse; margin-top:5px; direction:rtl; font-family:'Cairo', 'Inter', sans-serif;">
+      <table id="printable-table" class="${densityClass}">
           <thead>
               <tr>
-                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; width: 40px; text-align: center;">#</th>
-                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; text-align:right;">اسم ومواصفات الصنف المعني بالطلب</th>
-                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; width: 110px; text-align: center;">الكمية المطلوبة الكلية</th>
-                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; width: 110px; text-align: center; color: #4f46e5;">صرف مخزن النادي</th>
-                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; width: 110px; text-align: center; color: #0891b2;">صرف مخزن النحاس</th>
-                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; width: 110px; text-align: center; color: #dc2626;">العجز / المتبقي الكلي</th>
-                  <th style="border:1px solid #000; padding:6px; font-size:12px; background-color:#f2f2f2; width: 140px; text-align: center;">حالة التوريد وموقف الصنف</th>
+                  <th>#</th>
+                  <th style="text-align: right !important;">اسم ومواصفات الصنف المعني بالطلب</th>
+                  <th>المطلوب</th>
+                  <th>النادي</th>
+                  <th>النحاس</th>
+                  <th>متبقي</th>
+                  <th>حالة الصنف</th>
               </tr>
           </thead>
           <tbody>
     `;
 
-    groupedItems.forEach((item, index) => {
-      let badgeClass = 'badge-pending';
-      if (item.badgeClass === 'badge-success') badgeClass = 'badge-success';
-      else if (item.badgeClass === 'badge-danger') badgeClass = 'badge-danger';
-
+    filteredItems.forEach((item, index) => {
       htmlTable += `
           <tr>
-              <td style="border:1px solid #000; padding:4px 6px; text-align:center;">${index + 1}</td>
-              <td style="border:1px solid #000; padding:4px 6px; text-align:right;"><strong>${item.item}</strong></td>
-              <td style="border:1px solid #000; padding:4px 6px; text-align:center; font-weight: bold;">${item.requestedQty}</td>
-              <td style="border:1px solid #000; padding:4px 6px; text-align:center; color:#4f46e5; font-weight: bold;">${item.nadiQty}</td>
-              <td style="border:1px solid #000; padding:4px 6px; text-align:center; color:#0891b2; font-weight: bold;">${item.nahasQty}</td>
-              <td style="border:1px solid #000; padding:4px 6px; text-align:center; color:${item.deficitQty > 0 ? '#dc2626' : '#475569'}; font-weight: bold; background-color:${item.deficitQty > 0 ? '#fef2f2' : 'transparent'};">${item.deficitQty}</td>
-              <td style="border:1px solid #000; padding:4px 6px; text-align:center;">
-                <span class="badge ${badgeClass}">${item.statusText}</span>
+              <td>${index + 1}</td>
+              <td style="text-align: right !important;"><strong>${item.item}</strong></td>
+              <td style="font-weight: bold;">${item.requestedQty}</td>
+              <td style="font-weight: bold;">${item.nadiQty}</td>
+              <td style="font-weight: bold;">${item.nahasQty}</td>
+              <td style="font-weight: bold; background-color:${item.deficitQty > 0 ? '#f9f9f9' : 'transparent'};">${item.deficitQty}</td>
+              <td style="font-weight: bold; color: #000000;">
+                ${item.statusText}
               </td>
           </tr>
       `;
@@ -1840,25 +1688,10 @@ export default function App() {
     htmlTable += `
           </tbody>
       </table>
-
-      <div class="summary-box-print" style="margin-top:15px; padding:10px; background:#e2e8f0; border-radius:6px; display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-family:'Cairo', sans-serif; font-weight:bold; font-size:11px; color:#1e293b; border:1px solid #cbd5e1; page-break-inside: avoid !important; break-inside: avoid !important;">
-        <div style="padding:6px; background:white; border-radius:4px; text-align:center; border:1px solid #cbd5e1;">
-          📊 إجمالي المطلوب: <span style="color:#475569; font-size:13px;">${totalQty}</span>
-        </div>
-        <div style="padding:6px; background:#faf5ff; border-radius:4px; text-align:center; border:1px solid #e9d5ff; color: #4f46e5;">
-          💜 إجمالي صرف النادي: <span style="font-size:13px;">${totalNadi}</span>
-        </div>
-        <div style="padding:6px; background:#ecfeff; border-radius:4px; text-align:center; border:1px solid #c5f2f7; color: #0891b2;">
-          🩵 إجمالي صرف النحاس: <span style="font-size:13px;">${totalNahas}</span>
-        </div>
-        <div style="padding:6px; background:#fef2f2; border-radius:4px; text-align:center; border:1px solid #fecaca; color: #dc2626;">
-          ❤️ إجمالي العجز المتبقي: <span style="font-size:13px;">${totalDeficit}</span>
-        </div>
-      </div>
     `;
 
     printHtmlSafe(
-      `الفاتورة الكلية رقم: [ ${view.invoiceCode} ]`,
+      onlyDeficit ? `كشف العجز المتبقي للفاتورة رقم: [ ${view.invoiceCode} ]` : `الفاتورة الكلية رقم: [ ${view.invoiceCode} ]`,
       `التاريخ: ${view.dateStr || getToday()}`,
       htmlTable,
       isPdf

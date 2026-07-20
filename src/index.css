@@ -693,6 +693,7 @@ tr:hover {
         font-family: Arial, Helvetica, sans-serif !important;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        counter-reset: page;
     }
 
     .sidebar, .no-print, .form-row, button, .app-wrapper, .panel, header, .top-header, .print-controls {
@@ -881,6 +882,14 @@ tr:hover {
         font-size: 11px !important;
         font-family: Arial, Helvetica, sans-serif !important;
         background: white !important;
+        color: #000000 !important;
+    }
+
+    .page-number-box::after {
+        counter-increment: page;
+        content: "الصفحة " counter(page);
+        font-weight: bold !important;
+        font-size: 11px !important;
         color: #000000 !important;
     }
 }

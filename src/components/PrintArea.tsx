@@ -23,6 +23,7 @@ export const PrintArea: React.FC<PrintAreaProps> = ({ printContent }) => {
       />
       <div className="print-footer">
         <div style={{ fontWeight: 'bold', color: '#000' }}>🏛️ شركة الروضة الشريفة</div>
+        <div className="page-number-box" style={{ fontWeight: 'bold', color: '#000' }}></div>
         <div style={{ direction: 'rtl', fontWeight: 'bold' }}>حقوق الملكية الفكرية محفوظة لمطور النظام Mohamed Nazih ورقم هاتفي 01029190615 ©</div>
       </div>
     </div>

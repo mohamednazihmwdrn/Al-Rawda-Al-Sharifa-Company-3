@@ -31,7 +31,7 @@ interface WarehousePanelsProps {
   onPrintCustomHtml: (title: string, subtitle: string, html: string, isPdf?: boolean) => void;
   invoiceView: InvoiceView | null;
   onCloseInvoiceDetails: () => void;
-  onPrintInvoiceDetails: (isPdf?: boolean) => void;
+  onPrintInvoiceDetails: (isPdf?: boolean, onlyDeficit?: boolean) => void;
 
   whQtyInputs: Record<string, string>;
   setWhQtyInputs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
@@ -1474,13 +1474,13 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
         const totalDisp = g.nadiQty + g.nahasQty;
         g.deficitQty = Math.max(0, g.requestedQty - totalDisp);
         if (totalDisp >= g.requestedQty) {
-          g.statusText = 'واصل كامل';
+          g.statusText = 'واصل';
           g.badgeClass = 'badge-success';
         } else if (totalDisp > 0) {
-          g.statusText = 'واصل جزئي';
+          g.statusText = 'جزئي';
           g.badgeClass = 'badge-pending';
         } else {
-          g.statusText = 'لم يصل / قيد الانتظار';
+          g.statusText = 'لا يوجد';
           g.badgeClass = 'badge-danger';
         }
         return g;
@@ -1527,11 +1527,11 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
               <tr style={{ backgroundColor: '#f1f5f9' }}>
                 <th style={{ width: '50px' }}>#</th>
                 <th style={{ textAlign: 'right' }}>اسم ومواصفات الصنف المعني بالطلب</th>
-                <th style={{ textAlign: 'center', width: '130px' }}>الكمية المطلوبة الكلية</th>
-                <th style={{ textAlign: 'center', width: '130px', color: '#4f46e5' }}>صرف مخزن النادي</th>
-                <th style={{ textAlign: 'center', width: '130px', color: '#0891b2' }}>صرف مخزن النحاس</th>
-                <th style={{ textAlign: 'center', width: '130px', color: '#dc2626' }}>العجز / المتبقي الكلي</th>
-                <th style={{ textAlign: 'center', width: '160px' }}>حالة التوريد وموقف الصنف</th>
+                <th style={{ textAlign: 'center', width: '130px' }}>المطلوب</th>
+                <th style={{ textAlign: 'center', width: '130px', color: '#4f46e5' }}>النادي</th>
+                <th style={{ textAlign: 'center', width: '130px', color: '#0891b2' }}>النحاس</th>
+                <th style={{ textAlign: 'center', width: '130px', color: '#dc2626' }}>متبقي</th>
+                <th style={{ textAlign: 'center', width: '160px' }}>حالة الصنف</th>
               </tr>
             </thead>
             <tbody>
@@ -1569,40 +1569,13 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
                       </span>
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <span className={`badge ${item.badgeClass}`}>{item.statusText}</span>
+                      <span style={{ fontWeight: 'bold', color: '#1e293b' }}>{item.statusText}</span>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-          <div
-            style={{
-              marginTop: '20px',
-              padding: '15px',
-              background: '#e2e8f0',
-              borderRadius: '8px',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-              gap: '15px',
-              fontWeight: 700,
-              fontSize: '14px',
-              color: '#1e293b'
-            }}
-          >
-            <div style={{ padding: '8px', background: 'white', borderRadius: '6px', textAlign: 'center', border: '1px solid #cbd5e1' }}>
-              📊 إجمالي المطلوب: <span style={{ color: '#475569', fontSize: '16px' }}>{totalQty}</span>
-            </div>
-            <div style={{ padding: '8px', background: '#faf5ff', borderRadius: '6px', textAlign: 'center', border: '1px solid #e9d5ff' }}>
-              💜 إجمالي صرف النادي: <span style={{ color: '#4f46e5', fontSize: '16px' }}>{totalNadi}</span>
-            </div>
-            <div style={{ padding: '8px', background: '#ecfeff', borderRadius: '6px', textAlign: 'center', border: '1px solid #c5f2f7' }}>
-              🩵 إجمالي صرف النحاس: <span style={{ color: '#0891b2', fontSize: '16px' }}>{totalNahas}</span>
-            </div>
-            <div style={{ padding: '8px', background: '#fef2f2', borderRadius: '6px', textAlign: 'center', border: '1px solid #fecaca' }}>
-              ❤️ إجمالي العجز المتبقي: <span style={{ color: '#ef4444', fontSize: '16px' }}>{totalDeficit}</span>
-            </div>
-          </div>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button className="btn btn-primary" style={{ marginTop: '15px' }} onClick={onCloseInvoiceDetails}>
@@ -1610,6 +1583,13 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
           </button>
           <button className="btn btn-success" style={{ marginTop: '15px' }} onClick={() => onPrintInvoiceDetails(false)}>
             🖨️ طباعة الفاتورة الفورية
+          </button>
+          <button
+            className="btn"
+            style={{ background: '#e11d48', color: 'white', marginTop: '15px' }}
+            onClick={() => onPrintInvoiceDetails(false, true)}
+          >
+            📋 طباعة التحديد (العجز فقط)
           </button>
           <button
             className="btn"

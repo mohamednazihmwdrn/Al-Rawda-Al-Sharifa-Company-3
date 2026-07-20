@@ -53,6 +53,12 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
   onViewInvoice,
 }) => {
   const [expandedReturnCode, setExpandedReturnCode] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedItemForInvoiceChoice, setSelectedItemForInvoiceChoice] = useState<any | null>(null);
+
+  React.useEffect(() => {
+    setSelectedItemForInvoiceChoice(null);
+  }, [activeTab]);
 
   // Find which user/branch is related to the activeTab
   const isBranchTab = activeTab.endsWith('-branch');
@@ -444,7 +450,6 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
     if (!user) return null;
 
     const branchName = user.name;
-    const [searchTerm, setSearchTerm] = useState('');
 
     // Filter incoming invoices for this specific branch
     const branchReceivedInvoices = (receivedInvoices || []).filter(
@@ -459,6 +464,7 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
       warehouse: string;
       qty: number;
       invoiceCode: string;
+      originalOrderId?: number;
     }
 
     const flatItems: FlatReceivedItem[] = [];
@@ -469,8 +475,9 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
           date: ri.date,
           item: item.item,
           warehouse: item.source || ri.source || 'غير حدد',
-          qty: item.dispatchQty !== undefined ? item.dispatchQty : 0,
+          qty: item.dispatchQty !== undefined ? item.dispatchQty : (item.qty !== undefined ? item.qty : 0),
           invoiceCode: ri.mergedInvoiceNumber,
+          originalOrderId: item.originalOrderId,
         });
       });
     });
@@ -544,6 +551,110 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
       );
     };
 
+    if (selectedItemForInvoiceChoice) {
+      const parseDateToMs = (dateStr: string) => {
+        if (!dateStr) return 0;
+        const cleaned = dateStr.replace(/\//g, '-');
+        const t = new Date(cleaned).getTime();
+        return isNaN(t) ? 0 : t;
+      };
+
+      const candidateOrders = (orders || []).filter(
+        (o) => o.item === selectedItemForInvoiceChoice.item && o.branch === branchName
+      );
+
+      let originalOrder = null;
+      if (selectedItemForInvoiceChoice.originalOrderId) {
+        originalOrder = candidateOrders.find(
+          (o) => o.id === selectedItemForInvoiceChoice.originalOrderId
+        );
+      }
+      if (!originalOrder && candidateOrders.length > 0) {
+        const targetTime = parseDateToMs(selectedItemForInvoiceChoice.date);
+        candidateOrders.sort((a, b) => {
+          const distA = Math.abs(parseDateToMs(a.date) - targetTime);
+          const distB = Math.abs(parseDateToMs(b.date) - targetTime);
+          return distA - distB;
+        });
+        originalOrder = candidateOrders[0];
+      }
+
+      const sentInvoiceCode = originalOrder?.invoiceCode;
+      const originalOrderQty = originalOrder?.qty !== undefined ? originalOrder.qty : 'غير متوفر';
+      const originalOrderDate = originalOrder?.date || 'غير متوفر';
+      const originalOrderStatus = originalOrder?.status || 'لا يوجد';
+
+      return (
+        <div id={activeTab} className="panel active" dir="rtl">
+          <button
+            className="btn btn-secondary"
+            onClick={() => setSelectedItemForInvoiceChoice(null)}
+            style={{ marginBottom: '20px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#475569', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}
+          >
+            🔙 العودة للكشف التفصيلي بالبنود
+          </button>
+
+          <div style={{ background: '#f8fafc', padding: '25px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }}>
+            <h3 style={{ fontSize: '18px', color: '#1e293b', marginBottom: '8px', borderBottom: '2px solid #cbd5e1', paddingBottom: '12px' }}>
+              📂 تفاصيل حركة واستعلام الصنف: <span style={{ color: '#1e40af', fontWeight: 'bold' }}>{selectedItemForInvoiceChoice.item}</span>
+            </h3>
+            <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '25px' }}>
+              الرجاء اختيار الفاتورة التي ترغب في الدخول إليها واستعراض تفاصيلها الكاملة:
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+              {/* Card 1: Sent Invoice */}
+              <div style={{ background: 'white', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                    <span style={{ fontSize: '24px' }}>📤</span>
+                    <h4 style={{ margin: 0, fontSize: '16px', color: '#475569', fontWeight: 'bold' }}>الفاتورة المرسلة (طلب النواقص الكلي)</h4>
+                  </div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px 0', fontSize: '14px', color: '#334155', lineHeight: '2' }}>
+                    <li>📄 <strong>رقم كشف الطلب:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{sentInvoiceCode || 'غير متوفر'}</span></li>
+                    <li>🔢 <strong>الكمية المطلوبة:</strong> <span style={{ fontWeight: 'bold' }}>{originalOrderQty}</span></li>
+                    <li>📅 <strong>تاريخ كشف الطلب:</strong> <span>{originalOrderDate}</span></li>
+                    <li>🚦 <strong>حالة الطلب الحالية:</strong> <span className="badge badge-info">{originalOrderStatus}</span></li>
+                  </ul>
+                </div>
+                <button
+                  className="btn btn-primary"
+                  style={{ width: '100%', marginTop: 'auto', padding: '10px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: sentInvoiceCode ? 'pointer' : 'not-allowed', opacity: sentInvoiceCode ? 1 : 0.6 }}
+                  disabled={!sentInvoiceCode}
+                  onClick={() => sentInvoiceCode && onViewInvoice?.(sentInvoiceCode, 'sent')}
+                >
+                  👁️ دخول واستعراض الفاتورة المرسلة
+                </button>
+              </div>
+
+              {/* Card 2: Received Invoice */}
+              <div style={{ background: 'white', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                    <span style={{ fontSize: '24px' }}>📥</span>
+                    <h4 style={{ margin: 0, fontSize: '16px', color: '#475569', fontWeight: 'bold' }}>الفاتورة المستلمة (وارد المخازن الفعلي)</h4>
+                  </div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px 0', fontSize: '14px', color: '#334155', lineHeight: '2' }}>
+                    <li>📄 <strong>رقم مستند الاستلام:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{selectedItemForInvoiceChoice.invoiceCode}</span></li>
+                    <li>🔢 <strong>الكمية المستلمة فعلياً:</strong> <span style={{ fontWeight: 'bold', color: '#16a34a' }}>{selectedItemForInvoiceChoice.qty}</span></li>
+                    <li>📅 <strong>تاريخ استلام الصنف:</strong> <span>{selectedItemForInvoiceChoice.date}</span></li>
+                    <li>🏢 <strong>المخزن المورد الرئيسي:</strong> <span className="badge badge-info">{selectedItemForInvoiceChoice.warehouse}</span></li>
+                  </ul>
+                </div>
+                <button
+                  className="btn btn-success"
+                  style={{ width: '100%', marginTop: 'auto', padding: '10px', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                  onClick={() => onViewInvoice?.(selectedItemForInvoiceChoice.invoiceCode, 'received')}
+                >
+                  👁️ دخول واستعراض الفاتورة المستلمة
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div id={activeTab} className="panel active" dir="rtl">
         <h2>📋 كشف تفصيلي بالبنود والأصناف المستلمة (وارد المخازن)</h2>
@@ -603,10 +714,17 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
               </tr>
             ) : (
               filteredItems.map((fi, idx) => (
-                <tr key={fi.id}>
+                <tr
+                  key={fi.id}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setSelectedItemForInvoiceChoice(fi)}
+                  title="انقر هنا لعرض الفاتورة المرسلة والمستلمة لهذا الصنف"
+                >
                   <td style={{ textAlign: 'center' }}>{idx + 1}</td>
                   <td>
-                    <strong>{fi.item}</strong>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#1e40af', textDecoration: 'underline' }}>
+                      🔍 <strong>{fi.item}</strong>
+                    </span>
                   </td>
                   <td style={{ textAlign: 'center' }}>{fi.date}</td>
                   <td style={{ textAlign: 'center' }}>

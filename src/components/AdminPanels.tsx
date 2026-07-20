@@ -302,8 +302,8 @@ export const AdminPanels: React.FC<AdminPanelsProps> = ({
                       </span>
                     </td>
                     <td>
-                      <span className={`badge ${disp >= req ? 'badge-success' : 'badge-pending'}`}>
-                        {disp >= req ? 'واصل كامل' : 'واصل جزئي / قيد التوريد'}
+                      <span className={`badge ${disp >= req ? 'badge-success' : (disp > 0 ? 'badge-pending' : 'badge-danger')}`}>
+                        {disp >= req ? 'واصل' : (disp > 0 ? 'جزئي' : 'لا يوجد')}
                       </span>
                     </td>
                   </tr>
