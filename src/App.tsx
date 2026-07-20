@@ -486,9 +486,6 @@ export default function App() {
     try {
       const printWindow = window.open('', '_blank');
       if (printWindow) {
-        // Detect if the HTML indicates it should start compact
-        const startCompact = html.includes('compact-table');
-
         printWindow.document.write(`
           <!DOCTYPE html>
           <html lang="ar" dir="rtl">
@@ -497,7 +494,7 @@ export default function App() {
             <title>${title}</title>
             <style id="pageStyle">
               @page {
-                size: A4 portrait;
+                size: auto;
                 margin: 10mm !important;
               }
             </style>
@@ -594,10 +591,10 @@ export default function App() {
               }
               th, td {
                 border: 0.5px solid #000000 !important;
-                padding: 8px 12px !important;
+                padding: 6px 8px !important;
                 font-family: Arial, Helvetica, sans-serif !important;
-                font-size: 12px !important;
-                line-height: 1.5 !important;
+                font-size: 11.5px !important;
+                line-height: 1.35 !important;
                 text-align: center !important;
                 vertical-align: middle !important;
                 word-wrap: break-word !important;
@@ -608,28 +605,28 @@ export default function App() {
                 box-shadow: none !important;
               }
               th {
-                font-size: 14px !important;
+                font-size: 12.5px !important;
                 font-weight: bold !important;
                 background-color: transparent !important;
                 background: none !important;
               }
               td strong {
                 font-weight: bold !important;
-                font-size: 12px !important;
+                font-size: 11.5px !important;
                 color: #000000 !important;
               }
 
-              /* Compact styling to comfortably fit up to 50 rows on a single page */
+              /* Compact styling to comfortably fit up to 30 items on A5 and 50 on A4 */
               .compact-table th, 
               .compact-table td {
-                padding: 4px 6px !important;
+                padding: 3px 5px !important;
                 font-size: 10px !important;
-                line-height: 1.2 !important;
+                line-height: 1.15 !important;
                 background-color: transparent !important;
                 background: none !important;
               }
               .compact-table th {
-                font-size: 11px !important;
+                font-size: 10.5px !important;
               }
               .compact-table td strong {
                 font-size: 10px !important;
@@ -648,40 +645,40 @@ export default function App() {
                 font-size: 10px !important;
               }
 
-              /* Column widths to fit >50 items comfortably */
-              th:nth-child(1), td:nth-child(1) {
+              /* Specific column settings for main invoice table to prevent squeezing of names */
+              #printable-table th:nth-child(1), #printable-table td:nth-child(1) {
                 width: 4% !important;
                 white-space: nowrap !important;
                 text-align: center !important;
               }
-              th:nth-child(2), td:nth-child(2) {
-                width: 44% !important;
+              #printable-table th:nth-child(2), #printable-table td:nth-child(2) {
+                width: 54% !important; /* increased to give maximum room for item names */
                 text-align: right !important;
                 white-space: normal !important;
                 word-break: break-word !important;
               }
-              th:nth-child(3), td:nth-child(3) {
-                width: 10% !important;
+              #printable-table th:nth-child(3), #printable-table td:nth-child(3) {
+                width: 8% !important;
                 text-align: center !important;
                 white-space: normal !important;
               }
-              th:nth-child(4), td:nth-child(4) {
-                width: 10% !important;
+              #printable-table th:nth-child(4), #printable-table td:nth-child(4) {
+                width: 8% !important;
                 text-align: center !important;
                 white-space: normal !important;
               }
-              th:nth-child(5), td:nth-child(5) {
-                width: 10% !important;
+              #printable-table th:nth-child(5), #printable-table td:nth-child(5) {
+                width: 8% !important;
                 text-align: center !important;
                 white-space: normal !important;
               }
-              th:nth-child(6), td:nth-child(6) {
-                width: 10% !important;
+              #printable-table th:nth-child(6), #printable-table td:nth-child(6) {
+                width: 8% !important;
                 text-align: center !important;
                 white-space: normal !important;
               }
-              th:nth-child(7), td:nth-child(7) {
-                width: 12% !important;
+              #printable-table th:nth-child(7), #printable-table td:nth-child(7) {
+                width: 10% !important;
                 text-align: center !important;
                 white-space: normal !important;
               }
@@ -780,24 +777,11 @@ export default function App() {
                   background-color: #ffffff !important;
                   page-break-inside: auto !important;
                   break-inside: auto !important;
-                }
-
-                thead {
-                  display: table-header-group !important;
-                }
-
-                tr {
-                  page-break-inside: avoid !important;
-                  break-inside: avoid !important;
-                  background: #ffffff !important;
-                  background-color: #ffffff !important;
-                }
-
-                th, td {
+                         th, td {
                   border: 1px solid #000000 !important;
-                  padding: 1.2px 2.5px !important; /* ultra tight vertical padding */
-                  font-size: 7.2pt !important;
-                  line-height: 1.02 !important;
+                  padding: 6px 8px !important; /* comfortable default padding */
+                  font-size: 11.5px !important; /* highly legible default font size */
+                  line-height: 1.35 !important;
                   text-align: center !important;
                   vertical-align: middle !important;
                   word-wrap: break-word !important;
@@ -808,7 +792,7 @@ export default function App() {
                 }
 
                 th {
-                  font-size: 8pt !important;
+                  font-size: 12.5px !important;
                   font-weight: bold !important;
                   white-space: normal !important;
                   background: #ffffff !important;
@@ -817,44 +801,58 @@ export default function App() {
 
                 td strong {
                   font-weight: bold !important;
-                  font-size: 7.2pt !important;
+                  font-size: 11.5px !important;
                   color: #000000 !important;
                 }
 
-                /* Proportional column widths for perfect printing without overlapping */
-                th:nth-child(1), td:nth-child(1) {
+                /* Compact table styles specifically when there are many rows */
+                .compact-table th,
+                .compact-table td {
+                  padding: 3px 5px !important;
+                  font-size: 10px !important;
+                  line-height: 1.15 !important;
+                }
+                .compact-table th {
+                  font-size: 10.5px !important;
+                }
+                .compact-table td strong {
+                  font-size: 10px !important;
+                }
+
+                /* Proportional column widths for perfect printing on main invoice table without overlapping */
+                #printable-table th:nth-child(1), #printable-table td:nth-child(1) {
                   width: 4% !important;
                   white-space: nowrap !important;
                   text-align: center !important;
                 }
-                th:nth-child(2), td:nth-child(2) {
-                  width: 44% !important;
+                #printable-table th:nth-child(2), #printable-table td:nth-child(2) {
+                  width: 54% !important; /* widened to 54% to prevent wrapping of item names */
                   text-align: right !important;
                   white-space: normal !important;
                   word-break: break-word !important;
                 }
-                th:nth-child(3), td:nth-child(3) {
-                  width: 10% !important;
+                #printable-table th:nth-child(3), #printable-table td:nth-child(3) {
+                  width: 8% !important;
                   text-align: center !important;
                   white-space: normal !important;
                 }
-                th:nth-child(4), td:nth-child(4) {
-                  width: 10% !important;
+                #printable-table th:nth-child(4), #printable-table td:nth-child(4) {
+                  width: 8% !important;
                   text-align: center !important;
                   white-space: normal !important;
                 }
-                th:nth-child(5), td:nth-child(5) {
-                  width: 10% !important;
+                #printable-table th:nth-child(5), #printable-table td:nth-child(5) {
+                  width: 8% !important;
                   text-align: center !important;
                   white-space: normal !important;
                 }
-                th:nth-child(6), td:nth-child(6) {
-                  width: 10% !important;
+                #printable-table th:nth-child(6), #printable-table td:nth-child(6) {
+                  width: 8% !important;
                   text-align: center !important;
                   white-space: normal !important;
                 }
-                th:nth-child(7), td:nth-child(7) {
-                  width: 12% !important;
+                #printable-table th:nth-child(7), #printable-table td:nth-child(7) {
+                  width: 10% !important;
                   text-align: center !important;
                   white-space: normal !important;
                 }
@@ -922,85 +920,8 @@ export default function App() {
                 }
               }
             </style>
-            <script>
-              function setPaperSize(size) {
-                var styleEl = document.getElementById('pageStyle');
-                if (size === 'A4') {
-                  styleEl.innerHTML = '@page { size: A4 portrait; margin: 4mm 4mm 8mm 4mm !important; }';
-                } else if (size === 'A5') {
-                  styleEl.innerHTML = '@page { size: A5 portrait; margin: 4mm 4mm 6mm 4mm !important; }';
-                }
-              }
-              function setDensity(density) {
-                var table = document.getElementById('printable-table');
-                var lblNormal = document.getElementById('labelNormal');
-                var lblCompact = document.getElementById('labelCompact');
-                if (!table) return;
-                if (density === 'compact') {
-                  table.classList.add('compact-table');
-                  if (lblCompact) {
-                    lblCompact.style.borderColor = '#10b981';
-                    lblCompact.style.color = '#065f46';
-                    lblCompact.style.borderWidth = '2px';
-                  }
-                  if (lblNormal) {
-                    lblNormal.style.borderColor = '#cbd5e1';
-                    lblNormal.style.color = '#475569';
-                    lblNormal.style.borderWidth = '1px';
-                  }
-                } else {
-                  table.classList.remove('compact-table');
-                  if (lblNormal) {
-                    lblNormal.style.borderColor = '#3b82f6';
-                    lblNormal.style.color = '#1e3a8a';
-                    lblNormal.style.borderWidth = '2px';
-                  }
-                  if (lblCompact) {
-                    lblCompact.style.borderColor = '#cbd5e1';
-                    lblCompact.style.color = '#475569';
-                    lblCompact.style.borderWidth = '1px';
-                  }
-                }
-              }
-            </script>
           </head>
           <body dir="rtl">
-            <div class="print-controls no-print" style="background: #f1f5f9; padding: 12px 20px; border-bottom: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: space-between; gap: 15px; direction: rtl; font-family: 'Cairo', sans-serif; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.03);">
-              <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="font-weight: bold; color: #1e293b; font-size: 13.5px;">🖨️ مقاس الورق:</span>
-                  <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; background: white; padding: 5px 12px; border-radius: 6px; border: 2px solid #3b82f6; font-size: 12.5px; font-weight: bold; color: #1e3a8a;" id="lblA4">
-                    <input type="radio" name="pageSize" value="A4" checked onchange="setPaperSize('A4')">
-                    <span>📄 A4</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; background: white; padding: 5px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12.5px; font-weight: bold; color: #475569;" id="lblA5">
-                    <input type="radio" name="pageSize" value="A5" onchange="setPaperSize('A5')">
-                    <span>📄 A5</span>
-                  </label>
-                </div>
-
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="font-weight: bold; color: #1e293b; font-size: 13.5px;">⚖️ نمط العرض:</span>
-                  <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; background: white; padding: 5px 12px; border-radius: 6px; border: ${startCompact ? '1px solid #cbd5e1' : '2px solid #3b82f6'}; font-size: 12.5px; font-weight: bold; color: ${startCompact ? '#475569' : '#1e3a8a'};" id="labelNormal">
-                    <input type="radio" name="density" value="normal" ${startCompact ? '' : 'checked'} onchange="setDensity('normal')">
-                    <span>✨ عادي</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; background: white; padding: 5px 12px; border-radius: 6px; border: ${startCompact ? '2px solid #10b981' : '1px solid #cbd5e1'}; font-size: 12.5px; font-weight: bold; color: ${startCompact ? '#065f46' : '#475569'};" id="labelCompact">
-                    <input type="radio" name="density" value="compact" ${startCompact ? 'checked' : ''} onchange="setDensity('compact')">
-                    <span>⚡ مضغوط جداً (يضمن ملاءمة 50 صنف في صفحة)</span>
-                  </label>
-                </div>
-              </div>
-              <div style="display: flex; gap: 10px;">
-                <button onclick="window.print()" style="background: #2563eb; color: white; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);">
-                  🖨️ طباعة المستند
-                </button>
-                <button onclick="window.close()" style="background: #64748b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; font-size: 13px;">
-                  إغلاق النافذة
-                </button>
-              </div>
-            </div>
-
             <div class="print-container">
               <div class="header">
                 <div class="company-name-main">شركة الروضة الشريفة</div>
