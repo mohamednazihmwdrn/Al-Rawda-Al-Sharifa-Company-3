@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UsersDatabase, DraftOrder, ReturnDraft, ReceivedInvoice, Order, ReturnOrder } from '../types';
+import { UsersDatabase, User, DraftOrder, ReturnDraft, ReceivedInvoice, Order, ReturnOrder } from '../types';
 
 interface BranchPanelsProps {
   activeTab: string;
@@ -26,6 +26,13 @@ interface BranchPanelsProps {
   returnsOrders?: ReturnOrder[];
   onViewInvoice?: (invoiceCode: string, type: 'sent' | 'wh_received' | 'merged' | 'closed' | 'received') => void;
   savedItemsCatalog?: Record<string, string[]>;
+
+  currentUser?: User;
+  onDeleteSingleOrder?: (orderId: number) => void;
+  onEditSingleOrder?: (orderId: number) => void;
+  onDeleteInvoiceByCode?: (invoiceCode: string) => void;
+  onDeleteReturnOrder?: (returnCodeOrId: string | number) => void;
+  onEditReturnOrder?: (returnId: number) => void;
 }
 
 export const BranchPanels: React.FC<BranchPanelsProps> = ({
@@ -53,6 +60,13 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
   returnsOrders = [],
   onViewInvoice,
   savedItemsCatalog = {},
+
+  currentUser,
+  onDeleteSingleOrder,
+  onEditSingleOrder,
+  onDeleteInvoiceByCode,
+  onDeleteReturnOrder,
+  onEditReturnOrder,
 }) => {
   const [expandedReturnCode, setExpandedReturnCode] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -406,13 +420,24 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
                         <span className={`badge ${badgeClass}`}>{statusText}</span>
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        <button
-                          className="btn btn-sm btn-view"
-                          onClick={() => setExpandedReturnCode(isExpanded ? null : retCode)}
-                          style={{ padding: '4px 10px', fontSize: '12px', background: isExpanded ? '#475569' : 'var(--warning)', color: 'white' }}
-                        >
-                          {isExpanded ? '▲ إغلاق التفاصيل' : '▼ عرض تفاصيل الأصناف'}
-                        </button>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                          <button
+                            className="btn btn-sm btn-view"
+                            onClick={() => setExpandedReturnCode(isExpanded ? null : retCode)}
+                            style={{ padding: '4px 10px', fontSize: '12px', background: isExpanded ? '#475569' : 'var(--warning)', color: 'white' }}
+                          >
+                            {isExpanded ? '▲ إغلاق التفاصيل' : '▼ عرض تفاصيل الأصناف'}
+                          </button>
+                          {currentUser?.role === 'admin' && (
+                            <button
+                              className="btn btn-sm btn-danger"
+                              onClick={() => onDeleteReturnOrder?.(retCode)}
+                              style={{ padding: '4px 10px', fontSize: '12px' }}
+                            >
+                              🗑️ حذف المرتجع
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                     {isExpanded && (

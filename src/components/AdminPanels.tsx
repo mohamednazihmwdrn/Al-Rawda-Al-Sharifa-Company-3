@@ -20,6 +20,13 @@ interface AdminPanelsProps {
   onViewInvoice: (invoiceCode: string, type: 'sent' | 'wh_received' | 'merged' | 'closed' | 'received') => void;
   receivedInvoices?: ReceivedInvoice[];
   returnsOrders?: ReturnOrder[];
+
+  onDeleteSingleOrder?: (orderId: number) => void;
+  onEditSingleOrder?: (orderId: number) => void;
+  onDeleteInvoiceByCode?: (invoiceCode: string) => void;
+  onDeleteMergedInvoice?: (invoiceNumber: string) => void;
+  onDeleteReturnOrder?: (returnCodeOrId: string | number) => void;
+  onEditReturnOrder?: (returnId: number) => void;
 }
 
 export const AdminPanels: React.FC<AdminPanelsProps> = ({
@@ -41,6 +48,13 @@ export const AdminPanels: React.FC<AdminPanelsProps> = ({
   onViewInvoice,
   receivedInvoices = [],
   returnsOrders = [],
+
+  onDeleteSingleOrder,
+  onEditSingleOrder,
+  onDeleteInvoiceByCode,
+  onDeleteMergedInvoice,
+  onDeleteReturnOrder,
+  onEditReturnOrder,
 }) => {
   // Add User Form States
   const [key, setKey] = React.useState('');
@@ -253,18 +267,19 @@ export const AdminPanels: React.FC<AdminPanelsProps> = ({
               <th>المنصرف فعلياً</th>
               <th>العجز المتبقي</th>
               <th>حالة الحركة الكلية</th>
+              <th>إجراءات الإدارة</th>
             </tr>
           </thead>
           <tbody>
             {!adminTrackInput ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                <td colSpan={9} style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
                   يرجى كتابة اسم الصنف بالأعلى لتوليد كشف الحساب والتقارير التفصيلية المباشرة له.
                 </td>
               </tr>
             ) : filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', color: 'var(--danger)', padding: '20px' }}>
+                <td colSpan={9} style={{ textAlign: 'center', color: 'var(--danger)', padding: '20px' }}>
                   ❌ لم يتم العثور على أي تحركات أو فواتير مسجلة لهذا الصنف في أي معرض أو مخزن.
                 </td>
               </tr>
@@ -305,6 +320,24 @@ export const AdminPanels: React.FC<AdminPanelsProps> = ({
                       <span className={`badge ${disp >= req ? 'badge-success' : (disp > 0 ? 'badge-pending' : 'badge-danger')}`}>
                         {disp >= req ? 'واصل' : (disp > 0 ? 'جزئي' : 'لا يوجد')}
                       </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button
+                          className="btn btn-sm btn-warning"
+                          style={{ padding: '3px 8px', fontSize: '11px' }}
+                          onClick={() => onEditSingleOrder?.(o.id)}
+                        >
+                          ✏️ تعديل
+                        </button>
+                        <button
+                          className="btn btn-sm btn-danger"
+                          style={{ padding: '3px 8px', fontSize: '11px' }}
+                          onClick={() => onDeleteSingleOrder?.(o.id)}
+                        >
+                          🗑️ حذف
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -376,12 +409,20 @@ export const AdminPanels: React.FC<AdminPanelsProps> = ({
                       </td>
                       <td>{inv.date}</td>
                       <td>
-                        <button
-                          className="btn btn-sm btn-view"
-                          onClick={() => onViewInvoice(inv.invoiceNumber, 'merged')}
-                        >
-                          👁️ تفقد شامل وعرض
-                        </button>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            className="btn btn-sm btn-view"
+                            onClick={() => onViewInvoice(inv.invoiceNumber, 'merged')}
+                          >
+                            👁️ تفقد شامل وعرض
+                          </button>
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={() => onDeleteMergedInvoice?.(inv.invoiceNumber)}
+                          >
+                            🗑️ حذف الفاتورة
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -570,6 +611,13 @@ export const AdminPanels: React.FC<AdminPanelsProps> = ({
                           </span>
                           <span style={{ fontSize: '11px', color: '#64748b' }}>📅 تاريخ الطلب: {firstItem?.date}</span>
                           <span className={`badge ${badgeColor}`} style={{ fontSize: '11px' }}>{statusLabel}</span>
+                          <button
+                            className="btn btn-sm btn-danger"
+                            style={{ padding: '2px 8px', fontSize: '11px' }}
+                            onClick={() => onDeleteInvoiceByCode?.(invCode)}
+                          >
+                            🗑️ حذف الفاتورة
+                          </button>
                         </div>
 
                         <table className="table-mini" style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse', marginTop: '5px' }}>
@@ -580,6 +628,7 @@ export const AdminPanels: React.FC<AdminPanelsProps> = ({
                               <th style={{ padding: '6px', textAlign: 'center' }}>المنصرف فعلياً</th>
                               <th style={{ padding: '6px', textAlign: 'center' }}>العجز المتبقي</th>
                               <th style={{ padding: '6px', textAlign: 'center' }}>المخزن المورد</th>
+                              <th style={{ padding: '6px', textAlign: 'center' }}>إجراء</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -599,6 +648,24 @@ export const AdminPanels: React.FC<AdminPanelsProps> = ({
                                     ) : (
                                       <span style={{ color: '#94a3b8', fontSize: '11px' }}>-</span>
                                     )}
+                                  </td>
+                                  <td style={{ padding: '6px', textAlign: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                                      <button
+                                        className="btn btn-sm btn-warning"
+                                        style={{ padding: '1px 5px', fontSize: '10px' }}
+                                        onClick={() => onEditSingleOrder?.(it.id)}
+                                      >
+                                        ✏️
+                                      </button>
+                                      <button
+                                        className="btn btn-sm btn-danger"
+                                        style={{ padding: '1px 5px', fontSize: '10px' }}
+                                        onClick={() => onDeleteSingleOrder?.(it.id)}
+                                      >
+                                        🗑️
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               );

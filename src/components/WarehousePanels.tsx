@@ -41,6 +41,13 @@ interface WarehousePanelsProps {
   setSearchArchQueries: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   searchMergedQuery: string;
   setSearchMergedQuery: (val: string) => void;
+
+  onDeleteSingleOrder?: (orderId: number) => void;
+  onEditSingleOrder?: (orderId: number) => void;
+  onDeleteInvoiceByCode?: (invoiceCode: string) => void;
+  onDeleteMergedInvoice?: (invoiceNumber: string) => void;
+  onDeleteReturnOrder?: (returnCodeOrId: string | number) => void;
+  onEditReturnOrder?: (returnId: number) => void;
 }
 
 export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
@@ -71,6 +78,13 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
   setSearchArchQueries,
   searchMergedQuery,
   setSearchMergedQuery,
+
+  onDeleteSingleOrder,
+  onEditSingleOrder,
+  onDeleteInvoiceByCode,
+  onDeleteMergedInvoice,
+  onDeleteReturnOrder,
+  onEditReturnOrder,
 }) => {
   const [expandedOrderId, setExpandedOrderId] = React.useState<number | null>(null);
 
@@ -1539,7 +1553,7 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
             </tbody>
           </table>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button className="btn btn-primary" style={{ marginTop: '15px' }} onClick={onCloseInvoiceDetails}>
             ↩ رجوع للأرشيف
           </button>
@@ -1560,6 +1574,23 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
           >
             📄 تصدير الفاتورة PDF
           </button>
+          {currentUser.role === 'admin' && (
+            <button
+              className="btn btn-danger"
+              style={{ marginTop: '15px' }}
+              onClick={() => {
+                const code = view.invoiceCode || view.invoiceNumber;
+                if (code.startsWith('M-INV-')) {
+                  onDeleteMergedInvoice?.(code);
+                } else {
+                  onDeleteInvoiceByCode?.(code);
+                }
+                onCloseInvoiceDetails();
+              }}
+            >
+              🗑️ حذف الفاتورة بالكامل
+            </button>
+          )}
         </div>
       </div>
     );

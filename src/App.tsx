@@ -99,7 +99,7 @@ export default function App() {
   });
 
   const [orders, setOrders] = useState<Order[]>(() => {
-    const s = localStorage.getItem('ordersData_v3');
+    const s = localStorage.getItem('ordersData_v4');
     try {
       return s ? JSON.parse(s) : [];
     } catch (e) {
@@ -108,7 +108,7 @@ export default function App() {
   });
 
   const [draftOrders, setDraftOrders] = useState<DraftOrder[]>(() => {
-    const s = localStorage.getItem('draftOrdersData_v3');
+    const s = localStorage.getItem('draftOrdersData_v4');
     try {
       return s ? JSON.parse(s) : [];
     } catch (e) {
@@ -117,7 +117,7 @@ export default function App() {
   });
 
   const [returnsDraft, setReturnsDraft] = useState<ReturnDraft[]>(() => {
-    const s = localStorage.getItem('returnsDraftData_v3');
+    const s = localStorage.getItem('returnsDraftData_v4');
     try {
       return s ? JSON.parse(s) : [];
     } catch (e) {
@@ -126,7 +126,7 @@ export default function App() {
   });
 
   const [returnsOrders, setReturnsOrders] = useState<ReturnOrder[]>(() => {
-    const s = localStorage.getItem('returnsOrdersData_v3');
+    const s = localStorage.getItem('returnsOrdersData_v4');
     try {
       return s ? JSON.parse(s) : [];
     } catch (e) {
@@ -135,7 +135,7 @@ export default function App() {
   });
 
   const [mergedInvoices, setMergedInvoices] = useState<MergedInvoice[]>(() => {
-    const s = localStorage.getItem('mergedInvoices_v3');
+    const s = localStorage.getItem('mergedInvoices_v4');
     try {
       return s ? JSON.parse(s) : [];
     } catch (e) {
@@ -144,7 +144,7 @@ export default function App() {
   });
 
   const [receivedInvoices, setReceivedInvoices] = useState<ReceivedInvoice[]>(() => {
-    const s = localStorage.getItem('receivedInvoices_v3');
+    const s = localStorage.getItem('receivedInvoices_v4');
     try {
       return s ? JSON.parse(s) : [];
     } catch (e) {
@@ -153,7 +153,7 @@ export default function App() {
   });
 
   const [closedInvoices, setClosedInvoices] = useState<MergedInvoice[]>(() => {
-    const s = localStorage.getItem('closedInvoices_v3');
+    const s = localStorage.getItem('closedInvoices_v4');
     try {
       return s ? JSON.parse(s) : [];
     } catch (e) {
@@ -162,17 +162,17 @@ export default function App() {
   });
 
   const [orderIdCounter, setOrderIdCounter] = useState<number>(() => {
-    const s = localStorage.getItem('orderIdCounter_v3');
+    const s = localStorage.getItem('orderIdCounter_v4');
     return s ? parseInt(s) : 1;
   });
 
   const [returnIdCounter, setReturnIdCounter] = useState<number>(() => {
-    const s = localStorage.getItem('returnIdCounter_v3');
+    const s = localStorage.getItem('returnIdCounter_v4');
     return s ? parseInt(s) : 1;
   });
 
   const [savedItemsCatalog, setSavedItemsCatalog] = useState<Record<string, string[]>>(() => {
-    const s = localStorage.getItem('savedItemsCatalog_v3');
+    const s = localStorage.getItem('savedItemsCatalog_v4');
     try {
       if (!s) return {};
       const parsed = JSON.parse(s);
@@ -300,6 +300,27 @@ export default function App() {
   const [searchWhQueries, setSearchWhQueries] = useState<Record<string, string>>({});
   const [searchArchQueries, setSearchArchQueries] = useState<Record<string, string>>({});
   const [searchMergedQuery, setSearchMergedQuery] = useState<string>('');
+
+  // --- Edit Modal State for Admin ---
+  const [editModalData, setEditModalData] = useState<{
+    title: string;
+    item: string;
+    qty: number;
+    onSave: (newItem: string, newQty: number) => void;
+  } | null>(null);
+  const [editItemNameInput, setEditItemNameInput] = useState<string>('');
+  const [editQtyInput, setEditQtyInput] = useState<string>('');
+
+  const openEditModal = (
+    title: string,
+    initialItem: string,
+    initialQty: number,
+    onSave: (newItem: string, newQty: number) => void
+  ) => {
+    setEditItemNameInput(initialItem);
+    setEditQtyInput(initialQty.toString());
+    setEditModalData({ title, item: initialItem, qty: initialQty, onSave });
+  };
 
   // --- Real-time Firestore Sync ---
   useEffect(() => {
@@ -429,17 +450,17 @@ export default function App() {
 
   // Auto-Save whenever states change (Local Backup & Firestore live update)
   useEffect(() => {
-    localStorage.setItem('usersDatabase_v3', JSON.stringify(users));
-    localStorage.setItem('ordersData_v3', JSON.stringify(orders));
-    localStorage.setItem('draftOrdersData_v3', JSON.stringify(draftOrders));
-    localStorage.setItem('returnsDraftData_v3', JSON.stringify(returnsDraft));
-    localStorage.setItem('returnsOrdersData_v3', JSON.stringify(returnsOrders));
-    localStorage.setItem('mergedInvoices_v3', JSON.stringify(mergedInvoices));
-    localStorage.setItem('receivedInvoices_v3', JSON.stringify(receivedInvoices));
-    localStorage.setItem('closedInvoices_v3', JSON.stringify(closedInvoices));
-    localStorage.setItem('orderIdCounter_v3', orderIdCounter.toString());
-    localStorage.setItem('returnIdCounter_v3', returnIdCounter.toString());
-    localStorage.setItem('savedItemsCatalog_v3', JSON.stringify(savedItemsCatalog));
+    localStorage.setItem('usersDatabase_v4', JSON.stringify(users));
+    localStorage.setItem('ordersData_v4', JSON.stringify(orders));
+    localStorage.setItem('draftOrdersData_v4', JSON.stringify(draftOrders));
+    localStorage.setItem('returnsDraftData_v4', JSON.stringify(returnsDraft));
+    localStorage.setItem('returnsOrdersData_v4', JSON.stringify(returnsOrders));
+    localStorage.setItem('mergedInvoices_v4', JSON.stringify(mergedInvoices));
+    localStorage.setItem('receivedInvoices_v4', JSON.stringify(receivedInvoices));
+    localStorage.setItem('closedInvoices_v4', JSON.stringify(closedInvoices));
+    localStorage.setItem('orderIdCounter_v4', orderIdCounter.toString());
+    localStorage.setItem('returnIdCounter_v4', returnIdCounter.toString());
+    localStorage.setItem('savedItemsCatalog_v4', JSON.stringify(savedItemsCatalog));
 
     const currentStateStr = JSON.stringify({
       users: users || {},
@@ -1504,6 +1525,83 @@ export default function App() {
     showToast('🧼 تم تصفير وتنظيف كافة البيانات والعدادات بنجاح كامل وإعادة تهيئة النظام بنجاح!', 'success');
   };
 
+  // --- Admin Override Permissions (Delete & Edit Operations) ---
+  const handleAdminDeleteSingleOrder = async (orderId: number) => {
+    const confirmed = await safeConfirm('هل أنت متأكد من حذف هذا الصنف من المعاملة بالكامل؟');
+    if (confirmed) {
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      showToast('تم حذف الصنف بنجاح من المعاملة', 'warning');
+    }
+  };
+
+  const handleAdminEditSingleOrder = (orderId: number) => {
+    const target = orders.find((o) => o.id === orderId);
+    if (!target) return;
+    openEditModal(`تعديل صنف بالطلب (${target.invoiceCode})`, target.item, target.qty, (newItem, newQty) => {
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId
+            ? {
+                ...o,
+                item: newItem,
+                qty: newQty,
+                remainingQty: newQty - (o.dispatchQty || 0),
+              }
+            : o
+        )
+      );
+      showToast('تم حفظ التعديل على الصنف بنجاح', 'success');
+    });
+  };
+
+  const handleAdminDeleteInvoiceByCode = async (invoiceCode: string) => {
+    const confirmed = await safeConfirm(`هل أنت متأكد من إلغاء وحذف الفاتورة بالكامل [ ${invoiceCode} ] وكافة أصنافها؟`);
+    if (confirmed) {
+      setOrders((prev) => prev.filter((o) => o.invoiceCode !== invoiceCode));
+      setReceivedInvoices((prev) => prev.filter((ri) => ri.invoiceCode !== invoiceCode && ri.mergedInvoiceNumber !== invoiceCode));
+      showToast(`تم إلغاء وحذف الفاتورة [ ${invoiceCode} ] بنجاح`, 'warning');
+    }
+  };
+
+  const handleAdminDeleteMergedInvoice = async (invoiceNumber: string) => {
+    const confirmed = await safeConfirm(`هل أنت متأكد من إلغاء وحذف الفاتورة المدمجة [ ${invoiceNumber} ]؟`);
+    if (confirmed) {
+      setMergedInvoices((prev) => prev.filter((inv) => inv.invoiceNumber !== invoiceNumber));
+      setClosedInvoices((prev) => prev.filter((inv) => inv.invoiceNumber !== invoiceNumber));
+      setReceivedInvoices((prev) => prev.filter((ri) => ri.mergedInvoiceNumber !== invoiceNumber));
+      showToast(`تم حذف الفاتورة المدمجة [ ${invoiceNumber} ] بنجاح`, 'warning');
+    }
+  };
+
+  const handleAdminDeleteReturnOrder = async (returnCodeOrId: string | number) => {
+    const confirmed = await safeConfirm('هل أنت متأكد من إلغاء وحذف مستند المرتجع؟');
+    if (confirmed) {
+      setReturnsOrders((prev) =>
+        prev.filter((r) => r.returnCode !== returnCodeOrId && r.id !== returnCodeOrId)
+      );
+      showToast('تم حذف مستند المرتجع بنجاح', 'warning');
+    }
+  };
+
+  const handleAdminEditReturnOrder = (returnId: number) => {
+    const target = returnsOrders.find((r) => r.id === returnId);
+    if (!target) return;
+    openEditModal(`تعديل صنف بالمرتجع (${target.returnCode})`, target.item, target.qty, (newItem, newQty) => {
+      setReturnsOrders((prev) =>
+        prev.map((r) =>
+          r.id === returnId
+            ? {
+                ...r,
+                item: newItem,
+                qty: newQty,
+              }
+            : r
+        )
+      );
+      showToast('تم حفظ التعديل على المرتجع بنجاح', 'success');
+    });
+  };
+
   // --- Document details screen loader ---
   const handleViewInvoice = (
     invoiceCode: string,
@@ -1858,6 +1956,12 @@ export default function App() {
           onViewInvoice={handleViewInvoice}
           receivedInvoices={receivedInvoices}
           returnsOrders={returnsOrders}
+          onDeleteSingleOrder={handleAdminDeleteSingleOrder}
+          onEditSingleOrder={handleAdminEditSingleOrder}
+          onDeleteInvoiceByCode={handleAdminDeleteInvoiceByCode}
+          onDeleteMergedInvoice={handleAdminDeleteMergedInvoice}
+          onDeleteReturnOrder={handleAdminDeleteReturnOrder}
+          onEditReturnOrder={handleAdminEditReturnOrder}
         />
 
         {/* Branch requests screens */}
@@ -1886,6 +1990,12 @@ export default function App() {
           returnsOrders={returnsOrders}
           onViewInvoice={handleViewInvoice}
           savedItemsCatalog={savedItemsCatalog}
+          currentUser={currentUser || undefined}
+          onDeleteSingleOrder={handleAdminDeleteSingleOrder}
+          onEditSingleOrder={handleAdminEditSingleOrder}
+          onDeleteInvoiceByCode={handleAdminDeleteInvoiceByCode}
+          onDeleteReturnOrder={handleAdminDeleteReturnOrder}
+          onEditReturnOrder={handleAdminEditReturnOrder}
         />
 
         {/* Warehouse processing & lists history screens */}
@@ -1916,6 +2026,12 @@ export default function App() {
           setSearchArchQueries={setSearchArchQueries}
           searchMergedQuery={searchMergedQuery}
           setSearchMergedQuery={setSearchMergedQuery}
+          onDeleteSingleOrder={handleAdminDeleteSingleOrder}
+          onEditSingleOrder={handleAdminEditSingleOrder}
+          onDeleteInvoiceByCode={handleAdminDeleteInvoiceByCode}
+          onDeleteMergedInvoice={handleAdminDeleteMergedInvoice}
+          onDeleteReturnOrder={handleAdminDeleteReturnOrder}
+          onEditReturnOrder={handleAdminEditReturnOrder}
         />
       </div>
 
@@ -2227,6 +2343,121 @@ export default function App() {
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-dark, #1e293b)')}
               >
                 إغلاق وامتثال
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Admin Item Edit Modal */}
+      {editModalData && (
+        <div
+          id="admin-edit-item-modal"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '16px',
+            backdropFilter: 'blur(4px)',
+          }}
+          dir="rtl"
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '480px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #f3f4f6',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  backgroundColor: '#e0f2fe',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#0284c7',
+                  fontSize: '22px',
+                  flexShrink: 0,
+                }}
+              >
+                ✏️
+              </div>
+              <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#111827', margin: 0 }}>
+                {editModalData.title}
+              </h3>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '24px' }}>
+              <div className="form-group">
+                <label style={{ fontSize: '13px', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+                  اسم الصنف:
+                </label>
+                <input
+                  type="text"
+                  value={editItemNameInput}
+                  onChange={(e) => setEditItemNameInput(e.target.value)}
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label style={{ fontSize: '13px', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+                  الكمية:
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={editQtyInput}
+                  onChange={(e) => setEditQtyInput(e.target.value)}
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                className="btn"
+                style={{
+                  backgroundColor: '#94a3b8',
+                  color: '#ffffff',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+                onClick={() => setEditModalData(null)}
+              >
+                إلغاء
+              </button>
+              <button
+                className="btn btn-primary"
+                style={{
+                  padding: '8px 20px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  const newQtyParsed = parseInt(editQtyInput) || editModalData.qty;
+                  const newItemTrimmed = editItemNameInput.trim() || editModalData.item;
+                  editModalData.onSave(newItemTrimmed, newQtyParsed);
+                  setEditModalData(null);
+                }}
+              >
+                💾 حفظ التعديلات
               </button>
             </div>
           </div>
