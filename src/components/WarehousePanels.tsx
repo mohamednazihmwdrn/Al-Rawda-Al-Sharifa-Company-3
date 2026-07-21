@@ -140,27 +140,13 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
         `;
       }
 
-      const totalRequired = filteredOrders.reduce((sum, o) => sum + o.qty, 0);
-      const totalDispatched = filteredOrders.reduce((sum, o) => sum + (o.status === 'تم الصرف' ? (o.dispatchQty || 0) : 0), 0);
-
       htmlTable += `
           </tbody>
         </table>
-        <div style="margin-top:15px; padding:10px; border:1px solid #000; direction:rtl; font-size:11px; line-height:1.5;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-            <div>📦 إجمالي البنود المدرجة: <strong>${filteredOrders.length} أصناف</strong></div>
-            <div>📊 إجمالي الكميات المطلوبة: <strong>${totalRequired} وحدات</strong></div>
-            <div>✅ إجمالي الكميات المصروفة: <strong>${totalDispatched} وحدات</strong></div>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-top:20px; border-top:1px dashed #000; padding-top:10px;">
-            <div>توقيع أمين مستودع ${warehouseName}: ....................................</div>
-            <div>اعتماد إدارة الحركة والتشغيل: ....................................</div>
-          </div>
-        </div>
       `;
 
       onPrintCustomHtml(
-        `مسودة بيان التحضير اليومي - ${warehouseName}`,
+        `النواقص اليومية - ${warehouseName}`,
         `تاريخ وتوقيت كشف الصرف: ${new Date().toLocaleDateString('ar-EG')} - ${new Date().toLocaleTimeString('ar-EG')}`,
         htmlTable,
         isPdf
@@ -193,7 +179,7 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
               style={{ background: 'var(--success)', color: 'white' }}
               onClick={() => handlePrintLive(false)}
             >
-              🖨️ طباعة كشف التحضير
+              🖨️ طباعة النواقص اليومية
             </button>
             <button
               className="btn"
@@ -407,21 +393,9 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
         `;
       }
 
-      const totalQty = openReturns.reduce((sum, r) => sum + r.qty, 0);
-
       htmlTable += `
           </tbody>
         </table>
-        <div style="margin-top:15px; padding:10px; border:1px solid #000; direction:rtl; font-size:11px; line-height:1.5;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-            <div>📦 إجمالي بنود المرتجعات المفتوحة: <strong>${openReturns.length} أصناف</strong></div>
-            <div>📊 إجمالي الكميات المرتجعة: <strong>${totalQty} وحدات</strong></div>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-top:20px; border-top:1px dashed #000; padding-top:10px;">
-            <div>اسم وتوقيع المستلم الفعلي: ....................................</div>
-            <div>اعتماد إدارة العهد والمخازن: ....................................</div>
-          </div>
-        </div>
       `;
 
       onPrintCustomHtml(
@@ -1148,21 +1122,9 @@ export const WarehousePanels: React.FC<WarehousePanelsProps> = ({
         `;
       }
 
-      const totalQty = items.reduce((sum, r) => sum + r.qty, 0);
-
       htmlTable += `
           </tbody>
         </table>
-        <div style="margin-top:15px; padding:10px; border:1px solid #000; direction:rtl; font-size:11px; line-height:1.5;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-            <div>📦 إجمالي بنود المرتجعات المستلمة: <strong>${items.length} أصناف</strong></div>
-            <div>📊 إجمالي الوحدات المستلمة: <strong>${totalQty} وحدات</strong></div>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-top:20px; border-top:1px dashed #000; padding-top:10px;">
-            <div>توقيع مستلم العهدة بمستودع ${warehouseName}: ....................................</div>
-            <div>اعتماد إدارة العهد الكلية: ....................................</div>
-          </div>
-        </div>
       `;
 
       onPrintCustomHtml(
