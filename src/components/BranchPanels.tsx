@@ -25,6 +25,7 @@ interface BranchPanelsProps {
   orders?: Order[];
   returnsOrders?: ReturnOrder[];
   onViewInvoice?: (invoiceCode: string, type: 'sent' | 'wh_received' | 'merged' | 'closed' | 'received') => void;
+  savedItemsCatalog?: Record<string, string[]>;
 }
 
 export const BranchPanels: React.FC<BranchPanelsProps> = ({
@@ -51,6 +52,7 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
   orders = [],
   returnsOrders = [],
   onViewInvoice,
+  savedItemsCatalog = {},
 }) => {
   const [expandedReturnCode, setExpandedReturnCode] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,6 +95,8 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
       }
     };
 
+    const branchCatalog = (savedItemsCatalog && (savedItemsCatalog[branchName] || savedItemsCatalog[userKey])) || [];
+
     return (
       <div id={activeTab} className="panel active" dir="rtl">
         <h2>📋 إعداد طلبية نواقص - {branchName}</h2>
@@ -101,7 +105,7 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
             <label>اكتب اسم الصنف</label>
             <input
               type="text"
-              list="items-autocomplete-list"
+              list={`items-autocomplete-list-${userKey}`}
               id={itemInputKey}
               value={itemVal}
               onChange={(e) =>
@@ -109,6 +113,11 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
               }
               onKeyDown={handleItemKeyDown}
             />
+            <datalist id={`items-autocomplete-list-${userKey}`}>
+              {branchCatalog.map((item, idx) => (
+                <option key={idx} value={item} />
+              ))}
+            </datalist>
           </div>
           <div className="form-group">
             <label>الكمية</label>
@@ -210,6 +219,8 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
       }
     };
 
+    const branchCatalog = (savedItemsCatalog && (savedItemsCatalog[branchName] || savedItemsCatalog[userKey])) || [];
+
     return (
       <div id={activeTab} className="panel active" dir="rtl">
         <h2>↩️ إعداد فاتورة مرتجعات (الفاتورة المفتوحة حالياً) - {branchName}</h2>
@@ -222,7 +233,7 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
             <label style={{ fontWeight: 'bold', color: '#92400e' }}>✍️ اسم صنف المرتجع</label>
             <input
               type="text"
-              list="items-autocomplete-list"
+              list={`items-autocomplete-list-${userKey}`}
               id={itemInputKey}
               placeholder="اكتب اسم الصنف أو اختر من القائمة"
               value={itemVal}
@@ -235,6 +246,11 @@ export const BranchPanels: React.FC<BranchPanelsProps> = ({
               onKeyDown={handleItemKeyDown}
               style={{ border: '1px solid #f59e0b', borderRadius: '6px', padding: '10px' }}
             />
+            <datalist id={`items-autocomplete-list-${userKey}`}>
+              {branchCatalog.map((item, idx) => (
+                <option key={idx} value={item} />
+              ))}
+            </datalist>
           </div>
           <div className="form-group" style={{ flex: 1 }}>
             <label style={{ fontWeight: 'bold', color: '#92400e' }}>🔢 الكمية المرتجعة</label>

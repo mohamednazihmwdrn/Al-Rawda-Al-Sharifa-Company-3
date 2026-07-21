@@ -171,12 +171,15 @@ export default function App() {
     return s ? parseInt(s) : 1;
   });
 
-  const [savedItemsCatalog, setSavedItemsCatalog] = useState<string[]>(() => {
+  const [savedItemsCatalog, setSavedItemsCatalog] = useState<Record<string, string[]>>(() => {
     const s = localStorage.getItem('savedItemsCatalog_v3');
     try {
-      return s ? JSON.parse(s) : [];
+      if (!s) return {};
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) return {};
+      return parsed || {};
     } catch (e) {
-      return [];
+      return {};
     }
   });
 
@@ -317,7 +320,7 @@ export default function App() {
           closedInvoices: data.closedInvoices || [],
           orderIdCounter: data.orderIdCounter !== undefined ? data.orderIdCounter : 1,
           returnIdCounter: data.returnIdCounter !== undefined ? data.returnIdCounter : 1,
-          savedItemsCatalog: data.savedItemsCatalog || [],
+          savedItemsCatalog: (data.savedItemsCatalog && !Array.isArray(data.savedItemsCatalog)) ? data.savedItemsCatalog : {},
         });
 
         if (data.users) {
@@ -345,7 +348,13 @@ export default function App() {
         if (data.closedInvoices) setClosedInvoices(data.closedInvoices);
         if (data.orderIdCounter !== undefined) setOrderIdCounter(data.orderIdCounter);
         if (data.returnIdCounter !== undefined) setReturnIdCounter(data.returnIdCounter);
-        if (data.savedItemsCatalog) setSavedItemsCatalog(data.savedItemsCatalog);
+        if (data.savedItemsCatalog) {
+          if (Array.isArray(data.savedItemsCatalog)) {
+            setSavedItemsCatalog({});
+          } else {
+            setSavedItemsCatalog(data.savedItemsCatalog);
+          }
+        }
 
         setTimeout(() => {
           isIncomingUpdate.current = false;
@@ -401,7 +410,7 @@ export default function App() {
           closedInvoices: [],
           orderIdCounter: 1,
           returnIdCounter: 1,
-          savedItemsCatalog: [],
+          savedItemsCatalog: {},
         }).catch((err) => console.error('Error initializing state:', err));
       }
     }, (error) => {
@@ -443,7 +452,7 @@ export default function App() {
       closedInvoices: closedInvoices || [],
       orderIdCounter: orderIdCounter !== undefined ? orderIdCounter : 1,
       returnIdCounter: returnIdCounter !== undefined ? returnIdCounter : 1,
-      savedItemsCatalog: savedItemsCatalog || [],
+      savedItemsCatalog: (savedItemsCatalog && !Array.isArray(savedItemsCatalog)) ? savedItemsCatalog : {},
     });
 
     if (isIncomingUpdate.current) {
@@ -852,9 +861,14 @@ export default function App() {
       return;
     }
 
-    if (!savedItemsCatalog.includes(item)) {
-      setSavedItemsCatalog((prev) => [...prev, item]);
-    }
+    setSavedItemsCatalog((prev) => {
+      const current = prev && !Array.isArray(prev) ? prev : {};
+      const branchList = current[branchName] || [];
+      if (!branchList.includes(item)) {
+        return { ...current, [branchName]: [...branchList, item] };
+      }
+      return current;
+    });
 
     const existingIdx = draftOrders.findIndex((d) => d.branch === branchName && d.item === item);
     if (existingIdx !== -1) {
@@ -958,9 +972,14 @@ export default function App() {
       return;
     }
 
-    if (!savedItemsCatalog.includes(item)) {
-      setSavedItemsCatalog((prev) => [...prev, item]);
-    }
+    setSavedItemsCatalog((prev) => {
+      const current = prev && !Array.isArray(prev) ? prev : {};
+      const branchList = current[branchName] || [];
+      if (!branchList.includes(item)) {
+        return { ...current, [branchName]: [...branchList, item] };
+      }
+      return current;
+    });
 
     const existingIdx = returnsDraft.findIndex((r) => r.branch === branchName && r.item === item);
     if (existingIdx !== -1) {
@@ -1403,7 +1422,13 @@ export default function App() {
       if (data.closedInvoices) setClosedInvoices(data.closedInvoices);
       if (data.orderIdCounter) setOrderIdCounter(parseInt(data.orderIdCounter));
       if (data.returnIdCounter) setReturnIdCounter(parseInt(data.returnIdCounter));
-      if (data.savedItemsCatalog) setSavedItemsCatalog(data.savedItemsCatalog);
+      if (data.savedItemsCatalog) {
+        if (Array.isArray(data.savedItemsCatalog)) {
+          setSavedItemsCatalog({});
+        } else {
+          setSavedItemsCatalog(data.savedItemsCatalog);
+        }
+      }
 
       setAdminBackupInput('');
       showToast(
@@ -1474,7 +1499,7 @@ export default function App() {
     setClosedInvoices([]);
     setOrderIdCounter(1);
     setReturnIdCounter(1);
-    setSavedItemsCatalog([]);
+    setSavedItemsCatalog({});
 
     showToast('🧼 تم تصفير وتنظيف كافة البيانات والعدادات بنجاح كامل وإعادة تهيئة النظام بنجاح!', 'success');
   };
@@ -1782,7 +1807,7 @@ export default function App() {
     <div id="app-screen" className="app-wrapper">
       {/* Autocomplete suggestions datalist */}
       <datalist id="items-autocomplete-list">
-        {savedItemsCatalog.map((item, idx) => (
+        {(((currentUser?.name && savedItemsCatalog[currentUser.name]) || (currentUser?.key && savedItemsCatalog[currentUser.key])) || []).map((item, idx) => (
           <option key={idx} value={item} />
         ))}
       </datalist>
@@ -1860,6 +1885,7 @@ export default function App() {
           orders={orders}
           returnsOrders={returnsOrders}
           onViewInvoice={handleViewInvoice}
+          savedItemsCatalog={savedItemsCatalog}
         />
 
         {/* Warehouse processing & lists history screens */}
